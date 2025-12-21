@@ -1,4 +1,3 @@
-// src/app/admin/produtos/AdminProdutosClient.tsx
 'use client'
 
 import { useState, useTransition } from 'react'
@@ -6,15 +5,16 @@ import { salvarProduto, toggleDisponibilidade, deletarProduto } from '@/lib/acti
 import { 
   Pencil, Trash, Plus, Eye, EyeOff, X, 
   Save, Image as ImageIcon, Loader2, 
-  Package, Search, Filter
+  Package, Search
 } from 'lucide-react'
 import { toast } from 'sonner'
 
+// AQUI ESTAVA O ERRO: Mudei preco para aceitar null
 type Produto = {
   id: string
   nome: string
   descricao: string | null
-  preco: number
+  preco: number | null 
   categoria: string
   imagem: string | null
   disponivel: boolean
@@ -78,7 +78,7 @@ export default function AdminProdutosClient({ produtos: produtosIniciais }: { pr
       id: produto.id,
       nome: produto.nome,
       descricao: produto.descricao || '',
-      preco: produto.preco.toString(),
+      preco: produto.preco ? produto.preco.toString() : '',
       categoria: produto.categoria,
       imagem: produto.imagem || ''
     })
@@ -106,15 +106,16 @@ export default function AdminProdutosClient({ produtos: produtosIniciais }: { pr
 
         const result = await salvarProduto(payload)
         
-        if (result.success) {
+        if (result.success && result.produto) {
           toast.success(editandoId ? 'Produto atualizado!' : 'Produto criado!')
           setModalAberto(false)
-          // Atualiza lista local
+          
+          // Atualiza lista local com tipagem correta
           if (editandoId) {
             setProdutos(produtos.map(p => 
-              p.id === editandoId ? { ...p, ...payload, id: editandoId } : p
+              p.id === editandoId ? { ...p, ...result.produto } : p
             ))
-          } else if (result.produto) {
+          } else {
             setProdutos([...produtos, result.produto])
           }
         } else {
@@ -278,8 +279,8 @@ export default function AdminProdutosClient({ produtos: produtosIniciais }: { pr
                   
                   <div className="flex items-center justify-between mt-4">
                     <span className="text-xl font-bold text-red-600">
-                      {produto.preco > 0 
-                        ? `R$ ${produto.preco.toFixed(2)}` 
+                      {(produto.preco || 0) > 0 
+                        ? `R$ ${(produto.preco || 0).toFixed(2)}` 
                         : 'Por tamanho'}
                     </span>
                     

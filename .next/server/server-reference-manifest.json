@@ -1,0 +1,114 @@
+{
+  "node": {
+    "41b80d1c287effaca28d97dd3ed331a10bb37912": {
+      "workers": {
+        "app/admin/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!",
+        "app/pedir/page": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=!",
+        "app/admin/produtos/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!"
+      },
+      "layer": {
+        "app/admin/page": "action-browser",
+        "app/pedir/page": "rsc",
+        "app/admin/produtos/page": "action-browser"
+      }
+    },
+    "5f08e6c4ad9e09b0b9f6c428777bd57588d457a5": {
+      "workers": {
+        "app/admin/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!",
+        "app/pedir/page": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=!",
+        "app/admin/produtos/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!"
+      },
+      "layer": {
+        "app/admin/page": "action-browser",
+        "app/pedir/page": "rsc",
+        "app/admin/produtos/page": "action-browser"
+      }
+    },
+    "abef3c92006745a690fbb325498719d1d455224d": {
+      "workers": {
+        "app/admin/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!",
+        "app/pedir/page": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=!",
+        "app/admin/produtos/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!"
+      },
+      "layer": {
+        "app/admin/page": "action-browser",
+        "app/pedir/page": "rsc",
+        "app/admin/produtos/page": "action-browser"
+      }
+    },
+    "af362f8001972f96e516b82c9d9fc9a6bc111d45": {
+      "workers": {
+        "app/admin/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!",
+        "app/pedir/page": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=!",
+        "app/admin/produtos/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!"
+      },
+      "layer": {
+        "app/admin/page": "action-browser",
+        "app/pedir/page": "rsc",
+        "app/admin/produtos/page": "action-browser"
+      }
+    },
+    "bbec99e3ad88f36215144167ac030ab57e40d459": {
+      "workers": {
+        "app/admin/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!",
+        "app/pedir/page": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=!",
+        "app/admin/produtos/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!"
+      },
+      "layer": {
+        "app/admin/page": "action-browser",
+        "app/pedir/page": "rsc",
+        "app/admin/produtos/page": "action-browser"
+      }
+    },
+    "d417d8e3ac19a8f3877b6fca1070f42115d677c7": {
+      "workers": {
+        "app/admin/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!",
+        "app/pedir/page": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=!",
+        "app/admin/produtos/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!"
+      },
+      "layer": {
+        "app/admin/page": "action-browser",
+        "app/pedir/page": "rsc",
+        "app/admin/produtos/page": "action-browser"
+      }
+    },
+    "e380ccaf8ca994d2b9458b06c0de1e944f6f4c6f": {
+      "workers": {
+        "app/admin/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!",
+        "app/pedir/page": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=!",
+        "app/admin/produtos/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!"
+      },
+      "layer": {
+        "app/admin/page": "action-browser",
+        "app/pedir/page": "rsc",
+        "app/admin/produtos/page": "action-browser"
+      }
+    },
+    "e47d776174966ee0e676d740df9c70930883592c": {
+      "workers": {
+        "app/admin/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!",
+        "app/pedir/page": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=!",
+        "app/admin/produtos/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!"
+      },
+      "layer": {
+        "app/admin/page": "action-browser",
+        "app/pedir/page": "rsc",
+        "app/admin/produtos/page": "action-browser"
+      }
+    },
+    "e7ef840218a803e6e77449cb3f9d42bb289bf346": {
+      "workers": {
+        "app/admin/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!",
+        "app/pedir/page": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=!",
+        "app/admin/produtos/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Ctell%20me%20why%5C%5CDownloads%5C%5Cmarmitaria%5C%5Csrc%5C%5Clib%5C%5Cactions.ts%22%2C%5B%22logout%22%2C%22salvarProduto%22%2C%22criarPedido%22%2C%22atualizarStatusPedido%22%2C%22getCardapio%22%2C%22getPedidosHoje%22%2C%22toggleDisponibilidade%22%2C%22deletarProduto%22%2C%22verificarLogin%22%5D%5D%5D&__client_imported__=true!"
+      },
+      "layer": {
+        "app/admin/page": "action-browser",
+        "app/pedir/page": "rsc",
+        "app/admin/produtos/page": "action-browser"
+      }
+    }
+  },
+  "edge": {},
+  "encryptionKey": "cWo5VyJK2PgXBSU+09LRu2BrxosBTEOJcwFG1ltLEFo="
+}

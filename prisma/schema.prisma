@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+// Tabela de Produtos/Pratos
+model Produto {
+  id          String   @id @default(cuid())
+  nome        String
+  descricao   String?
+  imagem      String?
+  categoria   Categoria @default(MISTURA)
+  preco       Float?   // Preço pode ser null para complementos
+  disponivel  Boolean  @default(true)
+  destaque    Boolean  @default(false)
+  ordem       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  itensPedido ItemPedido[]
+  
+  @@map("produtos")
+}
+
+enum Categoria {
+  MISTURA
+  COMPLEMENTO
+  BEBIDA
+  SOBREMESA
+}
+
+// Tabela de Tamanhos de Marmita
+model Tamanho {
+  id        String   @id @default(cuid())
+  nome      String   // P, M, G, GG
+  descricao String?  // "Ideal para 1 pessoa"
+  preco     Float
+  ativo     Boolean  @default(true)
+  ordem     Int      @default(0)
+  
+  itensPedido ItemPedido[]
+  
+  @@map("tamanhos")
+}
+
+// Tabela de Clientes
+model Cliente {
+  id        String   @id @default(cuid())
+  nome      String
+  telefone  String   @unique
+  endereco  String
+  bairro    String?
+  referencia String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  pedidos   Pedido[]
+  
+  @@map("clientes")
+}
+
+// Tabela de Pedidos
+model Pedido {
+  id              String   @id @default(cuid())
+  numero          Int      @default(autoincrement())
+  clienteId       String
+  cliente         Cliente  @relation(fields: [clienteId], references: [id])
+  status          StatusPedido @default(PENDENTE)
+  formaPagamento  FormaPagamento
+  trocoPara       Float?
+  observacoes     String?
+  total           Float
+  taxaEntrega     Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  preparadoAt     DateTime?
+  saiuEntregaAt   DateTime?
+  entregueAt      DateTime?
+  
+  itens           ItemPedido[]
+  
+  @@map("pedidos")
+}
+
+enum StatusPedido {
+  PENDENTE
+  CONFIRMADO
+  EM_PREPARO
+  PRONTO
+  SAIU_ENTREGA
+  ENTREGUE
+  CANCELADO
+}
+
+enum FormaPagamento {
+  PIX
+  DINHEIRO
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+}
+
+// Itens do Pedido
+model ItemPedido {
+  id          String   @id @default(cuid())
+  pedidoId    String
+  pedido      Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  tamanhoId   String?
+  tamanho     Tamanho? @relation(fields: [tamanhoId], references: [id])
+  produtoId   String
+  produto     Produto  @relation(fields: [produtoId], references: [id])
+  quantidade  Int      @default(1)
+  precoUnit   Float
+  observacao  String?
+  complementos  String?  // Para salvar: "Ovo Frito, Purê"
+  
+  @@map("itens_pedido")
+}
+
+// Configurações da Loja
+model Configuracao {
+  id              String   @id @default("config")
+  nomeLoja        String   @default("Marmitaria")
+  telefone        String?
+  endereco        String?
+  horarioAbertura String   @default("11:00")
+  horarioFechamento String @default("14:00")
+  aceitaPedidos   Boolean  @default(true)
+  mensagemFechado String   @default("Estamos fechados no momento")
+  taxaEntrega     Float    @default(0)
+  pixChave        String?
+  pixNome         String?
+  senhaAdmin String @default("123456")
+  updatedAt       DateTime @updatedAt
+  
+  @@map("configuracoes")
+}

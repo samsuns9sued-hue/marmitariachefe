@@ -234,3 +234,23 @@ export async function deletarTamanho(id: string) {
     return { success: false, error: 'Não é possível excluir um tamanho que já tem pedidos.' }
   }
 }
+
+// Adicione isso no final de src/lib/actions.ts
+
+export async function buscarClientePorTelefone(telefone: string) {
+  try {
+    // Remove caracteres não numéricos para buscar certinho
+    const telLimpo = telefone.trim()
+    
+    const cliente = await prisma.cliente.findUnique({
+      where: { telefone: telLimpo }
+    })
+    
+    if (cliente) {
+      return { success: true, cliente }
+    }
+    return { success: false }
+  } catch (error) {
+    return { success: false }
+  }
+}

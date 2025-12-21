@@ -1,16 +1,21 @@
 'use client'
 
-import Link from 'next/link' // <--- IMPORTAÇÃO ADICIONADA AQUI
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { getPedidosHoje, atualizarStatusPedido, logout } from '@/lib/actions'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Printer, RefreshCw, CheckCircle, Truck, Clock, LogOut, MapPin, Utensils, Ruler } from 'lucide-react'
 import { toast } from 'sonner'
+// 1. Importação do componente de impressão
+import ImpressaoRecibo from '@/components/ImpressaoRecibo'
 
 export default function AdminDashboard() {
   const [pedidos, setPedidos] = useState<any[]>([])
   const [carregando, setCarregando] = useState(true)
+  
+  // 2. Estado para guardar qual pedido vai ser impresso
+  const [pedidoParaImprimir, setPedidoParaImprimir] = useState<any>(null)
 
   // Função para buscar pedidos
   const carregarPedidos = async () => {
@@ -34,7 +39,6 @@ export default function AdminDashboard() {
 
   const mudarStatus = async (id: string, status: string) => {
     setPedidos(prev => prev.map(p => p.id === id ? { ...p, status } : p))
-    
     toast.promise(atualizarStatusPedido(id, status), {
       loading: 'Atualizando...',
       success: 'Status atualizado!',
@@ -42,13 +46,26 @@ export default function AdminDashboard() {
     })
   }
 
+  // 3. Função que aciona a impressão
+  const handleImprimir = (pedido: any) => {
+    setPedidoParaImprimir(pedido)
+    // Pequeno delay para o React desenhar o cupom antes de abrir a janela de print
+    setTimeout(() => {
+      window.print()
+    }, 100)
+  }
+
   // Gera o link do WhatsApp
   const linkZap = (telefone: string) => `https://wa.me/55${telefone.replace(/\D/g, '')}`
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 pb-20">
-      {/* Cabeçalho */}
-      <div className="flex justify-between items-center mb-4">
+      
+      {/* 4. Componente Invisível que só aparece na impressão */}
+      <ImpressaoRecibo pedido={pedidoParaImprimir} />
+
+      {/* Cabeçalho (some na impressão) */}
+      <div className="flex justify-between items-center mb-4 print:hidden">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Painel do Chefe</h1>
           <p className="text-sm text-gray-500">
@@ -65,8 +82,8 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* --- MENU DE NAVEGAÇÃO NOVO --- */}
-      <div className="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+      {/* Menu de Navegação (some na impressão) */}
+      <div className="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide print:hidden">
         <Link 
           href="/admin" 
           className="px-4 py-3 bg-gray-800 text-white rounded-xl shadow-md font-bold flex items-center gap-2 whitespace-nowrap"
@@ -86,10 +103,9 @@ export default function AdminDashboard() {
           <Ruler size={18} className="text-blue-500" /> Tamanhos
         </Link>
       </div>
-      {/* ----------------------------- */}
 
-      {/* Lista de Pedidos */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Lista de Pedidos (some na impressão) */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 print:hidden">
         {pedidos.length === 0 && !carregando && (
           <div className="col-span-full flex flex-col items-center justify-center py-10 text-gray-400">
             <ClipboardListIcon className="w-16 h-16 mb-2 opacity-20" />
@@ -165,7 +181,12 @@ export default function AdminDashboard() {
               </div>
 
               <div className="grid grid-cols-4 gap-2 mt-2">
-                <button title="Imprimir" className="flex items-center justify-center p-2 bg-gray-100 rounded hover:bg-gray-200">
+                {/* 5. Botão de Impressão Conectado */}
+                <button 
+                  onClick={() => handleImprimir(pedido)}
+                  title="Imprimir" 
+                  className="flex items-center justify-center p-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
+                >
                   <Printer size={18} />
                 </button>
                 

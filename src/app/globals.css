@@ -50,3 +50,31 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+@media print {
+  /* Esconde tudo no corpo da página */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Mostra apenas a área de impressão */
+  #area-impressao, #area-impressao * {
+    visibility: visible;
+  }
+
+  /* Posiciona o cupom no topo da folha */
+  #area-impressao {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Remove margens automáticas do navegador */
+  @page {
+    margin: 0;
+    size: auto;
+  }
+}

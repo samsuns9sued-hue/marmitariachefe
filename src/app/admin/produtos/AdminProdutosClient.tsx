@@ -9,13 +9,13 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-// AQUI ESTAVA O ERRO: Mudei preco para aceitar null
+// Definimos o tipo de forma que aceite o que vem do banco
 type Produto = {
   id: string
   nome: string
   descricao: string | null
   preco: number | null 
-  categoria: string
+  categoria: string // O banco manda Enum, mas aqui tratamos como string
   imagem: string | null
   disponivel: boolean
   ordem: number
@@ -36,8 +36,11 @@ const categorias = [
   { id: 'BEBIDA', nome: 'Bebida', emoji: '🥤' },
 ]
 
-export default function AdminProdutosClient({ produtos: produtosIniciais }: { produtos: Produto[] }) {
-  const [produtos, setProdutos] = useState(produtosIniciais)
+// Precisamos converter os dados iniciais para garantir compatibilidade
+export default function AdminProdutosClient({ produtos: produtosIniciais }: { produtos: any[] }) {
+  // Convertendo forçadamente para evitar briga de tipos
+  const [produtos, setProdutos] = useState<Produto[]>(produtosIniciais as unknown as Produto[])
+  
   const [modalAberto, setModalAberto] = useState(false)
   const [busca, setBusca] = useState('')
   const [filtroCategoria, setFiltroCategoria] = useState<string | null>(null)
@@ -110,13 +113,15 @@ export default function AdminProdutosClient({ produtos: produtosIniciais }: { pr
           toast.success(editandoId ? 'Produto atualizado!' : 'Produto criado!')
           setModalAberto(false)
           
-          // Atualiza lista local com tipagem correta
+          // AQUI ESTAVA O ERRO: Usamos "as unknown as Produto" para forçar a tipagem
+          const produtoFormatado = result.produto as unknown as Produto
+
           if (editandoId) {
-            setProdutos(produtos.map(p => 
-              p.id === editandoId ? { ...p, ...result.produto } : p
+            setProdutos(prev => prev.map(p => 
+              p.id === editandoId ? { ...p, ...produtoFormatado } : p
             ))
           } else {
-            setProdutos([...produtos, result.produto])
+            setProdutos(prev => [...prev, produtoFormatado])
           }
         } else {
           toast.error('Erro ao salvar produto')

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { getPedidosHoje, atualizarStatusPedido, logout } from '@/lib/actions'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Printer, RefreshCw, CheckCircle, Truck, Clock, LogOut } from 'lucide-react'
+import { Printer, RefreshCw, CheckCircle, Truck, Clock, LogOut, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function AdminDashboard() {
@@ -18,6 +18,7 @@ export default function AdminDashboard() {
       setPedidos(dados)
     } catch (error) {
       console.error(error)
+      toast.error("Erro ao atualizar pedidos")
     } finally {
       setCarregando(false)
     }
@@ -31,12 +32,12 @@ export default function AdminDashboard() {
   }, [])
 
   const mudarStatus = async (id: string, status: string) => {
+    // Atualização otimista (muda na tela antes de ir pro banco pra parecer rápido)
+    setPedidos(prev => prev.map(p => p.id === id ? { ...p, status } : p))
+    
     toast.promise(atualizarStatusPedido(id, status), {
       loading: 'Atualizando...',
-      success: () => {
-        carregarPedidos()
-        return 'Status atualizado!'
-      },
+      success: 'Status atualizado!',
       error: 'Erro ao atualizar'
     })
   }
@@ -80,8 +81,12 @@ export default function AdminDashboard() {
             {/* Cabeçalho do Card */}
             <div className="flex justify-between items-start mb-3">
               <div>
-                <h3 className="font-bold text-lg">#{pedido.numero} - {pedido.cliente.nome.split(' ')[0]}</h3>
-                <a href={linkZap(pedido.cliente.telefone)} target="_blank" className="text-xs text-green-600 font-medium hover:underline">
+                {/* ALTERAÇÃO 1: Removi o .split para mostrar nome completo */}
+                <h3 className="font-bold text-lg leading-tight">
+                  #{pedido.numero} - {pedido.cliente.nome}
+                </h3>
+                <a href={linkZap(pedido.cliente.telefone)} target="_blank" className="text-xs text-green-600 font-medium hover:underline flex items-center gap-1 mt-1">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
                   {pedido.cliente.telefone}
                 </a>
               </div>
@@ -95,36 +100,49 @@ export default function AdminDashboard() {
             </div>
 
             {/* Itens */}
-            <div className="space-y-2 mb-4">
+            <div className="space-y-2 mb-4 bg-gray-50 p-2 rounded">
               {pedido.itens.map((item: any) => (
-                <div key={item.id} className="text-sm border-b pb-1 last:border-0">
+                <div key={item.id} className="text-sm border-b border-gray-200 pb-1 last:border-0">
                   <div className="flex justify-between">
-                    <span className="font-semibold text-gray-700">
+                    <span className="font-bold text-gray-800">
                       {item.quantidade}x {item.produto.nome} {item.tamanho ? `(${item.tamanho.nome})` : ''}
                     </span>
                   </div>
                   {item.complementos && (
-                    <p className="text-xs text-gray-500">+ {item.complementos}</p>
+                    <p className="text-xs text-gray-600">+ {item.complementos}</p>
                   )}
                   {item.observacao && (
-                    <p className="text-xs text-red-500 font-medium">Obs: {item.observacao}</p>
+                    <p className="text-xs text-red-600 font-bold bg-red-50 inline-block px-1 rounded">Obs: {item.observacao}</p>
                   )}
                 </div>
               ))}
             </div>
 
             {/* Rodapé e Ações */}
-            <div className="mt-4 pt-3 border-t">
-              <div className="flex justify-between text-sm mb-3">
-                <span className="text-gray-500">Total:</span>
-                <span className="font-bold">R$ {pedido.total.toFixed(2)}</span>
-              </div>
-              <div className="text-xs text-gray-500 mb-3">
-                {pedido.cliente.endereco}, {pedido.cliente.bairro}
-                <div className="font-medium text-gray-700">Pagamento: {pedido.formaPagamento} (Troco: {pedido.trocoPara || '-'})</div>
+            <div className="mt-2">
+              {/* Endereço e Referência */}
+              <div className="text-sm text-gray-600 mb-3 bg-gray-50 p-2 rounded">
+                <p className="font-semibold flex items-center gap-1">
+                  <MapPin size={14} /> {pedido.cliente.endereco}, {pedido.cliente.bairro}
+                </p>
+                {/* ALTERAÇÃO 2: Mostrando o ponto de referência se existir */}
+                {pedido.cliente.referencia && (
+                   <p className="text-blue-600 font-medium text-xs mt-1 ml-4 border-l-2 border-blue-400 pl-2">
+                     Ref: {pedido.cliente.referencia}
+                   </p>
+                )}
+                <div className="font-medium text-gray-800 mt-2 border-t pt-1">
+                  Pagamento: {pedido.formaPagamento.replace('_', ' ')} 
+                  {pedido.trocoPara && <span className="text-red-600 font-bold ml-1">(Troco p/ {pedido.trocoPara})</span>}
+                </div>
+                <div className="flex justify-between mt-1 text-lg">
+                   <span>Total:</span>
+                   <span className="font-bold text-green-700">R$ {pedido.total.toFixed(2)}</span>
+                </div>
               </div>
 
               <div className="grid grid-cols-4 gap-2 mt-2">
+                {/* Botão de Imprimir (Apenas visual por enquanto) */}
                 <button title="Imprimir" className="flex items-center justify-center p-2 bg-gray-100 rounded hover:bg-gray-200">
                   <Printer size={18} />
                 </button>

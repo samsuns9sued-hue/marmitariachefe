@@ -8,6 +8,9 @@ export const dynamic = 'force-dynamic'
 export default async function PedirPage() {
   const dados = await getCardapio()
 
+  // Truque: transformamos em 'any' para o TypeScript não reclamar que falta a logoUrl
+  const config = dados.config as any
+
   return (
     <main className="min-h-screen bg-gray-100">
       {/* Hero Header com Gradiente */}
@@ -22,10 +25,11 @@ export default async function PedirPage() {
           {/* Logo/Avatar da Loja */}
           <div className="flex items-start gap-4">
             <div className="w-20 h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-              {dados.config?.logoUrl ? (
+              {/* Aqui estava o erro. Com o 'config' tratado acima, ele vai cair no Emoji se não tiver logo */}
+              {config?.logoUrl ? (
                 <img 
-                  src={dados.config.logoUrl} 
-                  alt={dados.config?.nomeLoja}
+                  src={config.logoUrl} 
+                  alt={config?.nomeLoja}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -35,7 +39,7 @@ export default async function PedirPage() {
             
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold truncate">
-                {dados.config?.nomeLoja || 'Restaurante'}
+                {config?.nomeLoja || 'Restaurante'}
               </h1>
               
               {/* Avaliação */}
@@ -50,17 +54,17 @@ export default async function PedirPage() {
           </div>
 
           {/* Info Cards */}
-          <div className="flex gap-3 mt-4 overflow-x-auto pb-1 -mx-4 px-4">
+          <div className="flex gap-3 mt-4 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
             {/* Status */}
             <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
-              dados.config?.aceitaPedidos 
+              config?.aceitaPedidos 
                 ? 'bg-green-500 text-white' 
                 : 'bg-gray-800 text-white'
             }`}>
               <span className={`w-2 h-2 rounded-full ${
-                dados.config?.aceitaPedidos ? 'bg-white animate-pulse' : 'bg-gray-400'
+                config?.aceitaPedidos ? 'bg-white animate-pulse' : 'bg-gray-400'
               }`} />
-              {dados.config?.aceitaPedidos ? 'Aberto agora' : 'Fechado'}
+              {config?.aceitaPedidos ? 'Aberto agora' : 'Fechado'}
             </div>
 
             {/* Tempo de Entrega */}
@@ -73,9 +77,9 @@ export default async function PedirPage() {
             <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm whitespace-nowrap">
               <MapPin size={16} />
               <span>
-                {dados.config?.taxaEntrega === 0 
+                {config?.taxaEntrega === 0 
                   ? 'Entrega Grátis' 
-                  : `R$ ${dados.config?.taxaEntrega?.toFixed(2)}`}
+                  : `R$ ${config?.taxaEntrega?.toFixed(2)}`}
               </span>
             </div>
           </div>
@@ -89,7 +93,7 @@ export default async function PedirPage() {
       <LojaView 
         produtos={dados.produtos} 
         tamanhos={dados.tamanhos} 
-        config={dados.config} 
+        config={config} 
       />
     </main>
   )

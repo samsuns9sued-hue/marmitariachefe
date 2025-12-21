@@ -39,8 +39,8 @@ export default async function PedirPage() {
             
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold truncate">
-                {config?.nomeLoja || 'Restaurante'}
-              </h1>
+  Marmitaria do Chefe  {/* <--- Mude aqui */}
+</h1>
               
               {/* Avaliação */}
               <div className="flex items-center gap-2 mt-1">

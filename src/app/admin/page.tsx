@@ -1,10 +1,11 @@
 'use client'
 
+import Link from 'next/link' // <--- IMPORTAÇÃO ADICIONADA AQUI
 import { useState, useEffect } from 'react'
 import { getPedidosHoje, atualizarStatusPedido, logout } from '@/lib/actions'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Printer, RefreshCw, CheckCircle, Truck, Clock, LogOut, MapPin } from 'lucide-react'
+import { Printer, RefreshCw, CheckCircle, Truck, Clock, LogOut, MapPin, Utensils, Ruler } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function AdminDashboard() {
@@ -32,7 +33,6 @@ export default function AdminDashboard() {
   }, [])
 
   const mudarStatus = async (id: string, status: string) => {
-    // Atualização otimista (muda na tela antes de ir pro banco pra parecer rápido)
     setPedidos(prev => prev.map(p => p.id === id ? { ...p, status } : p))
     
     toast.promise(atualizarStatusPedido(id, status), {
@@ -48,27 +48,53 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 pb-20">
       {/* Cabeçalho */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Cozinha & Pedidos</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Painel do Chefe</h1>
           <p className="text-sm text-gray-500">
             {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
           </p>
         </div>
         <div className="flex gap-2">
-          <button onClick={carregarPedidos} className="p-2 bg-white rounded-full shadow hover:bg-gray-100">
+          <button onClick={carregarPedidos} className="p-2 bg-white rounded-full shadow hover:bg-gray-100" title="Atualizar">
             <RefreshCw size={20} />
           </button>
-          <button onClick={() => logout()} className="p-2 bg-red-100 text-red-600 rounded-full shadow hover:bg-red-200">
+          <button onClick={() => logout()} className="p-2 bg-red-100 text-red-600 rounded-full shadow hover:bg-red-200" title="Sair">
             <LogOut size={20} />
           </button>
         </div>
       </div>
 
+      {/* --- MENU DE NAVEGAÇÃO NOVO --- */}
+      <div className="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        <Link 
+          href="/admin" 
+          className="px-4 py-3 bg-gray-800 text-white rounded-xl shadow-md font-bold flex items-center gap-2 whitespace-nowrap"
+        >
+          📋 Pedidos
+        </Link>
+        <Link 
+          href="/admin/produtos" 
+          className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl shadow-sm font-bold flex items-center gap-2 hover:bg-gray-50 whitespace-nowrap"
+        >
+          <Utensils size={18} className="text-orange-500" /> Cardápio
+        </Link>
+        <Link 
+          href="/admin/tamanhos" 
+          className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl shadow-sm font-bold flex items-center gap-2 hover:bg-gray-50 whitespace-nowrap"
+        >
+          <Ruler size={18} className="text-blue-500" /> Tamanhos
+        </Link>
+      </div>
+      {/* ----------------------------- */}
+
       {/* Lista de Pedidos */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {pedidos.length === 0 && !carregando && (
-          <p className="col-span-full text-center text-gray-500 py-10">Nenhum pedido hoje ainda.</p>
+          <div className="col-span-full flex flex-col items-center justify-center py-10 text-gray-400">
+            <ClipboardListIcon className="w-16 h-16 mb-2 opacity-20" />
+            <p>Nenhum pedido hoje ainda.</p>
+          </div>
         )}
 
         {pedidos.map((pedido) => (
@@ -81,7 +107,6 @@ export default function AdminDashboard() {
             {/* Cabeçalho do Card */}
             <div className="flex justify-between items-start mb-3">
               <div>
-                {/* ALTERAÇÃO 1: Removi o .split para mostrar nome completo */}
                 <h3 className="font-bold text-lg leading-tight">
                   #{pedido.numero} - {pedido.cliente.nome}
                 </h3>
@@ -120,12 +145,10 @@ export default function AdminDashboard() {
 
             {/* Rodapé e Ações */}
             <div className="mt-2">
-              {/* Endereço e Referência */}
               <div className="text-sm text-gray-600 mb-3 bg-gray-50 p-2 rounded">
                 <p className="font-semibold flex items-center gap-1">
                   <MapPin size={14} /> {pedido.cliente.endereco}, {pedido.cliente.bairro}
                 </p>
-                {/* ALTERAÇÃO 2: Mostrando o ponto de referência se existir */}
                 {pedido.cliente.referencia && (
                    <p className="text-blue-600 font-medium text-xs mt-1 ml-4 border-l-2 border-blue-400 pl-2">
                      Ref: {pedido.cliente.referencia}
@@ -142,7 +165,6 @@ export default function AdminDashboard() {
               </div>
 
               <div className="grid grid-cols-4 gap-2 mt-2">
-                {/* Botão de Imprimir (Apenas visual por enquanto) */}
                 <button title="Imprimir" className="flex items-center justify-center p-2 bg-gray-100 rounded hover:bg-gray-200">
                   <Printer size={18} />
                 </button>
@@ -179,5 +201,29 @@ export default function AdminDashboard() {
         ))}
       </div>
     </div>
+  )
+}
+
+function ClipboardListIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <path d="M12 11h4" />
+      <path d="M12 16h4" />
+      <path d="M8 11h.01" />
+      <path d="M8 16h.01" />
+    </svg>
   )
 }

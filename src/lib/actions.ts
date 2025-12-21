@@ -184,3 +184,53 @@ export async function deletarProduto(id: string) {
   revalidatePath('/admin/produtos')
   revalidatePath('/pedir')
 }
+
+// --- GERENCIAMENTO DE TAMANHOS ---
+
+export async function salvarTamanho(dados: any) {
+  try {
+    const { id, nome, descricao, preco, ativo, ordem } = dados
+
+    if (id) {
+      // Atualizar existente
+      await prisma.tamanho.update({
+        where: { id },
+        data: { nome, descricao, preco, ativo, ordem }
+      })
+    } else {
+      // Criar novo
+      await prisma.tamanho.create({
+        data: { 
+          nome, descricao, preco, ativo, 
+          ordem: ordem || 99 
+        }
+      })
+    }
+    revalidatePath('/admin/tamanhos')
+    revalidatePath('/pedir')
+    return { success: true }
+  } catch (error) {
+    console.error(error)
+    return { success: false, error: 'Erro ao salvar tamanho' }
+  }
+}
+
+export async function toggleTamanhoAtivo(id: string, estadoAtual: boolean) {
+  await prisma.tamanho.update({
+    where: { id },
+    data: { ativo: !estadoAtual }
+  })
+  revalidatePath('/admin/tamanhos')
+  revalidatePath('/pedir')
+}
+
+export async function deletarTamanho(id: string) {
+  try {
+    await prisma.tamanho.delete({ where: { id } })
+    revalidatePath('/admin/tamanhos')
+    revalidatePath('/pedir')
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: 'Não é possível excluir um tamanho que já tem pedidos.' }
+  }
+}

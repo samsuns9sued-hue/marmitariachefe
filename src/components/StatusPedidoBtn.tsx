@@ -2,16 +2,24 @@
 
 import { useState, useEffect } from 'react'
 import { buscarPedidosDoCliente } from '@/lib/actions'
-import { ClipboardList, X, RefreshCw, ChevronDown, ChevronUp, ChefHat, Truck, CheckCircle, Clock } from 'lucide-react'
+import { 
+  ClipboardList, X, RefreshCw, ChefHat, Truck, 
+  CheckCircle, Clock, Search, LogOut, User 
+} from 'lucide-react'
 import { format } from 'date-fns'
 
 export default function StatusPedidoBtn() {
   const [isOpen, setIsOpen] = useState(false)
   const [pedidos, setPedidos] = useState<any[]>([])
+  
+  // Telefone OFICIAL (logado)
   const [telefone, setTelefone] = useState('')
+  // Telefone que está sendo DIGITADO
+  const [inputTel, setInputTel] = useState('')
+  
   const [loading, setLoading] = useState(false)
 
-  // Tenta carregar o telefone salvo no navegador ao abrir o site
+  // Carrega telefone salvo ao abrir
   useEffect(() => {
     const telSalvo = localStorage.getItem('marmitaria_telefone')
     if (telSalvo) {
@@ -20,10 +28,11 @@ export default function StatusPedidoBtn() {
     }
   }, [])
 
-  // Auto-atualização a cada 15s se a janela estiver aberta
+  // Auto-atualização (Polling)
   useEffect(() => {
     let intervalo: any
     if (isOpen && telefone) {
+      // Atualiza a cada 15 segundos
       intervalo = setInterval(() => carregarPedidos(telefone, false), 15000)
     }
     return () => clearInterval(intervalo)
@@ -37,7 +46,22 @@ export default function StatusPedidoBtn() {
     if (mostrarLoading) setLoading(false)
   }
 
-  // Cores e Ícones por Status
+  // Ação do Botão Confirmar
+  const handleEntrar = () => {
+    if (inputTel.length < 8) return
+    setTelefone(inputTel)
+    localStorage.setItem('marmitaria_telefone', inputTel)
+    carregarPedidos(inputTel)
+  }
+
+  // Ação do Botão Trocar Usuário
+  const handleSair = () => {
+    setTelefone('')
+    setInputTel('')
+    setPedidos([])
+    localStorage.removeItem('marmitaria_telefone')
+  }
+
   const getStatusInfo = (status: string) => {
     switch (status) {
       case 'PENDENTE': return { cor: 'bg-yellow-100 text-yellow-700', icone: <Clock size={16}/>, texto: 'Aguardando Confirmação' }
@@ -75,65 +99,97 @@ export default function StatusPedidoBtn() {
         </div>
 
         {/* Conteúdo */}
-        <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+        <div className="flex-1 overflow-y-auto bg-gray-50">
           
-          {/* Se não tiver telefone salvo, pede pra digitar */}
-          {!telefone && (
-            <div className="text-center mt-10">
-              <p className="mb-2 text-gray-600">Digite seu WhatsApp para ver seus pedidos:</p>
+          {/* TELA 1: LOGIN (Se não tiver telefone definido) */}
+          {!telefone ? (
+            <div className="p-6 flex flex-col justify-center h-full">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search size={32} />
+                </div>
+                <h3 className="font-bold text-gray-800 text-lg">Acompanhar Pedido</h3>
+                <p className="text-sm text-gray-500">Digite o WhatsApp que você usou para fazer o pedido.</p>
+              </div>
+
+              <label className="text-xs font-bold text-gray-500 mb-1 ml-1">WhatsApp</label>
               <input 
                 type="tel" 
-                placeholder="Seu número..." 
-                className="p-3 border rounded-xl w-full mb-2"
-                onBlur={(e) => {
-                  const val = e.target.value
-                  setTelefone(val)
-                  localStorage.setItem('marmitaria_telefone', val)
-                  carregarPedidos(val)
-                }}
+                value={inputTel}
+                onChange={(e) => setInputTel(e.target.value)}
+                placeholder="(00) 00000-0000" 
+                className="p-4 border-2 border-gray-200 rounded-xl w-full mb-4 focus:border-red-500 outline-none text-lg"
               />
+              
+              <button 
+                onClick={handleEntrar}
+                className="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition-colors"
+              >
+                Ver Histórico
+              </button>
             </div>
-          )}
-
-          {loading ? (
-            <div className="flex justify-center mt-10"><RefreshCw className="animate-spin text-red-600"/></div>
           ) : (
-            <div className="space-y-4">
-              {pedidos.length === 0 && telefone && (
-                <p className="text-center text-gray-500 mt-10">Nenhum pedido encontrado para este número.</p>
-              )}
+            // TELA 2: LISTA DE PEDIDOS (Se já estiver logado)
+            <div>
+              {/* Barra de Usuário Logado */}
+              <div className="bg-white p-4 border-b flex justify-between items-center sticky top-0 z-10 shadow-sm">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <User size={16} className="text-red-600"/>
+                  <span>
+                    Cliente: <strong>{telefone}</strong>
+                  </span>
+                </div>
+                <button 
+                  onClick={handleSair}
+                  className="text-xs font-bold text-red-600 border border-red-200 px-3 py-1 rounded-full hover:bg-red-50 flex items-center gap-1"
+                >
+                  <LogOut size={12} /> Sair
+                </button>
+              </div>
 
-              {pedidos.map((pedido) => {
-                const statusInfo = getStatusInfo(pedido.status)
-                return (
-                  <div key={pedido.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-bold text-gray-800">#{pedido.numero}</span>
-                      <span className="text-xs text-gray-400">{format(new Date(pedido.createdAt), 'dd/MM HH:mm')}</span>
-                    </div>
-                    
-                    {/* Badge de Status Animado */}
-                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold mb-3 ${statusInfo.cor} transition-colors duration-500`}>
-                      {statusInfo.icone}
-                      {statusInfo.texto}
-                    </div>
+              <div className="p-4">
+                {loading ? (
+                  <div className="flex justify-center mt-10"><RefreshCw className="animate-spin text-red-600"/></div>
+                ) : (
+                  <div className="space-y-4">
+                    {pedidos.length === 0 && (
+                      <div className="text-center py-10 text-gray-400">
+                        <p>Nenhum pedido encontrado para este número.</p>
+                      </div>
+                    )}
 
-                    {/* Resumo dos Itens */}
-                    <div className="text-sm text-gray-600 border-t pt-2 space-y-1">
-                      {pedido.itens.map((item: any) => (
-                        <div key={item.id} className="flex justify-between">
-                          <span>{item.quantidade}x {item.produto.nome}</span>
+                    {pedidos.map((pedido) => {
+                      const statusInfo = getStatusInfo(pedido.status)
+                      return (
+                        <div key={pedido.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="font-bold text-gray-800">#{pedido.numero}</span>
+                            <span className="text-xs text-gray-400">{format(new Date(pedido.createdAt), 'dd/MM HH:mm')}</span>
+                          </div>
+                          
+                          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold mb-3 ${statusInfo.cor} transition-colors duration-500`}>
+                            {statusInfo.icone}
+                            {statusInfo.texto}
+                          </div>
+
+                          <div className="text-sm text-gray-600 border-t pt-2 space-y-1">
+                            {pedido.itens.map((item: any) => (
+                              <div key={item.id} className="flex justify-between">
+                                <span>{item.quantidade}x {item.produto.nome}</span>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <div className="mt-2 pt-2 border-t flex justify-between font-bold text-gray-800">
+                            <span>Total</span>
+                            <span>R$ {pedido.total.toFixed(2)}</span>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                    
-                    <div className="mt-2 pt-2 border-t flex justify-between font-bold text-gray-800">
-                      <span>Total</span>
-                      <span>R$ {pedido.total.toFixed(2)}</span>
-                    </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
+                )}
+              </div>
             </div>
           )}
         </div>

@@ -6,27 +6,58 @@ import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
+// --- 📍 CONFIGURAÇÃO DA ENTREGA (EDITE AQUI) ---
+const LOJA_LAT = -15.656795 // <--- COLOQUE SUA LATITUDE AQUI
+const LOJA_LNG = -56.086259 // <--- COLOQUE SUA LONGITUDE AQUI
+const RAIO_GRATIS_KM = 2.0
+const TAXA_EXTRA_FIXA = 3.00
+// -----------------------------------------------
+
+// Função matemática para calcular distância em KM (Haversine)
+function calcularDistanciaKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371 // Raio da Terra em km
+  const dLat = (lat2 - lat1) * (Math.PI / 180)
+  const dLon = (lon2 - lon1) * (Math.PI / 180)
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+    Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
+
+export async function calcularTaxaEntrega(latCliente: number, lngCliente: number) {
+  const distancia = calcularDistanciaKm(LOJA_LAT, LOJA_LNG, latCliente, lngCliente)
+  
+  if (distancia <= RAIO_GRATIS_KM) {
+    return { taxa: 0, distancia: distancia.toFixed(1) } // Grátis
+  } else {
+    return { taxa: TAXA_EXTRA_FIXA, distancia: distancia.toFixed(1) } // R$ 3,00
+  }
+}
+
 // --- ÁREA DO CLIENTE ---
 
 export async function getCardapio() {
   const [produtos, tamanhos, config] = await Promise.all([
-    prisma.produto.findMany({
-      where: { disponivel: true },
-      orderBy: [{ destaque: 'desc' }, { ordem: 'asc' }] // Melhorei a ordenação aqui
-    }),
-    prisma.tamanho.findMany({
-      orderBy: { ordem: 'asc' }
-    }),
-    prisma.configuracao.findUnique({
-      where: { id: 'config' }
-    })
+    prisma.produto.findMany({ where: { disponivel: true }, orderBy: [{ destaque: 'desc' }, { ordem: 'asc' }] }),
+    prisma.tamanho.findMany({ orderBy: { ordem: 'asc' } }),
+    prisma.configuracao.findUnique({ where: { id: 'config' } })
   ])
   return { produtos, tamanhos, config }
 }
 
+export async function buscarClientePorTelefone(telefone: string) {
+  try {
+    const telLimpo = telefone.trim()
+    const cliente = await prisma.cliente.findUnique({ where: { telefone: telLimpo } })
+    if (cliente) return { success: true, cliente }
+    return { success: false }
+  } catch (error) { return { success: false } }
+}
+
 export async function criarPedido(dados: any) {
   try {
-    // 1. Cria ou atualiza o cliente
     const cliente = await prisma.cliente.upsert({
       where: { telefone: dados.cliente.telefone },
       update: {
@@ -44,10 +75,6 @@ export async function criarPedido(dados: any) {
       }
     })
 
-    // 2. Concatena os complementos em uma string se vierem separados
-    // (O novo front não manda array de complementos complexos ainda, mas prevenimos erros)
-    
-    // 3. Cria o pedido
     const pedido = await prisma.pedido.create({
       data: {
         clienteId: cliente.id,
@@ -69,22 +96,18 @@ export async function criarPedido(dados: any) {
         }
       }
     })
-
     revalidatePath('/admin')
     return { success: true, pedidoId: pedido.id }
-
   } catch (error) {
     console.error('Erro ao criar pedido:', error)
     return { success: false, error: 'Erro ao processar pedido' }
   }
 }
 
-// --- ÁREA DO ADMIN ---
-
+// --- ADMIN ---
 export async function verificarLogin(_prevState: any, formData: FormData) {
   const senha = formData.get('senha') as string
   const config = await prisma.configuracao.findUnique({ where: { id: 'config' } })
-
   if (config?.senhaAdmin === senha) {
     cookies().set('admin_session', 'true', { httpOnly: true, maxAge: 60 * 60 * 24 })
     redirect('/admin')
@@ -101,25 +124,10 @@ export async function logout() {
 export async function getPedidosHoje() {
   const hoje = new Date()
   hoje.setHours(0, 0, 0, 0)
-
   return await prisma.pedido.findMany({
-    where: {
-      createdAt: {
-        gte: hoje
-      }
-    },
-    include: {
-      cliente: true,
-      itens: {
-        include: {
-          produto: true,
-          tamanho: true
-        }
-      }
-    },
-    orderBy: {
-      createdAt: 'desc'
-    }
+    where: { createdAt: { gte: hoje } },
+    include: { cliente: true, itens: { include: { produto: true, tamanho: true } } },
+    orderBy: { createdAt: 'desc' }
   })
 }
 
@@ -232,25 +240,5 @@ export async function deletarTamanho(id: string) {
     return { success: true }
   } catch (error) {
     return { success: false, error: 'Não é possível excluir um tamanho que já tem pedidos.' }
-  }
-}
-
-// Adicione isso no final de src/lib/actions.ts
-
-export async function buscarClientePorTelefone(telefone: string) {
-  try {
-    // Remove caracteres não numéricos para buscar certinho
-    const telLimpo = telefone.trim()
-    
-    const cliente = await prisma.cliente.findUnique({
-      where: { telefone: telLimpo }
-    })
-    
-    if (cliente) {
-      return { success: true, cliente }
-    }
-    return { success: false }
-  } catch (error) {
-    return { success: false }
   }
 }

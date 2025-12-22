@@ -242,3 +242,28 @@ export async function deletarTamanho(id: string) {
     return { success: false, error: 'Não é possível excluir um tamanho que já tem pedidos.' }
   }
 }
+
+export async function buscarPedidosDoCliente(telefone: string) {
+  try {
+    const telLimpo = telefone.replace(/\D/g, '') // Garante que só tem números
+    
+    // Busca pedidos recentes desse telefone
+    const pedidos = await prisma.pedido.findMany({
+      where: {
+        cliente: {
+          telefone: { contains: telLimpo } // Busca flexível
+        }
+      },
+      take: 5, // Pega os últimos 5
+      orderBy: { createdAt: 'desc' },
+      include: {
+        itens: {
+          include: { produto: true, tamanho: true }
+        }
+      }
+    })
+    return pedidos
+  } catch (error) {
+    return []
+  }
+}

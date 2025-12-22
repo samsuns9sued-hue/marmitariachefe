@@ -1,5 +1,6 @@
 'use client'
 
+import StatusPedidoBtn from './StatusPedidoBtn' // <--- Adicione isso
 import { useState } from 'react'
 import { useCarrinho } from '@/hooks/useCarrinho'
 import { criarPedido, buscarClientePorTelefone, calcularTaxaEntrega } from '@/lib/actions'
@@ -200,7 +201,14 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     const res = await criarPedido(payload)
 
     if (res.success) {
-      toast.success('Pedido Realizado!', { description: 'Aguarde a confirmação no WhatsApp.', duration: 5000, icon: '🎉' })
+      // SALVA O TELEFONE PARA O CLIENTE VER O PEDIDO DEPOIS
+      localStorage.setItem('marmitaria_telefone', cliente.telefone) // <--- LINHA NOVA
+
+      toast.success('Pedido Realizado com Sucesso!', { 
+        description: 'Você receberá a confirmação no seu WhatsApp em instantes.',
+        duration: 5000,
+        icon: '🎉'
+      })
       carrinho.limpar()
       setCarrinhoAberto(false)
       setEtapa(1)
@@ -228,6 +236,10 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
 
   return (
     <div className="pb-28 -mt-1">
+      
+      <StatusPedidoBtn /> {/* <--- ADICIONE AQUI O BOTÃO FLUTUANTE */}
+
+      {/* Navegação Sticky */}
       <nav className="sticky top-0 bg-white z-20 shadow-sm">
         <div className="flex gap-2 p-3 overflow-x-auto scrollbar-hide">
           {categorias.map((cat) => (

@@ -49,7 +49,7 @@ export default async function PedirPage() {
         </div>
         
         {/* BOTÃO MEUS PEDIDOS (POSICIONADO NA DIREITA ABSOLUTA) */}
-        <div className="absolute top-2 right-2 z-20">
+        <div className="absolute top-2 right-2 z-100">
           <HeaderMeusPedidos />
         </div>
 

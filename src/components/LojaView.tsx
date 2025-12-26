@@ -1,7 +1,6 @@
 // src/components/LojaView.tsx
 'use client'
 
-import StatusPedidoBtn from './StatusPedidoBtn'
 import { useState, useEffect } from 'react'
 import { useCarrinho } from '@/hooks/useCarrinho'
 import { criarPedido, buscarClientePorTelefone, calcularTaxaEntrega } from '@/lib/actions'
@@ -261,7 +260,6 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
 
   return (
     <div className="pb-28 -mt-1">
-      <StatusPedidoBtn /> 
 
       <nav className="sticky top-0 bg-white z-20 shadow-sm">
         <div className="flex gap-2 p-3 overflow-x-auto scrollbar-hide">

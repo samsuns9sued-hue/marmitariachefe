@@ -5,10 +5,9 @@ import { getPedidosParaEntrega, iniciarRotaEntrega, finalizarEntrega } from '@/l
 import { MapPin, Navigation, CheckCircle, Package, RefreshCw, ChevronDown, ChevronUp, Map } from 'lucide-react'
 import { toast } from 'sonner'
 
-// --- ⚠️ MUDANÇA ESTRATÉGICA: USAR APENAS O ESTADO ---
-// Isso permite que o Google decida se é Cuiabá ou Várzea Grande pelo Bairro
+// --- ⚠️ DEFINA SUA CIDADE AQUI ---
 const ESTADO_PADRAO = "Mato Grosso, Brasil" 
-// ---------------------------------------------------
+// ---------------------------------
 
 export default function EntregadorPage() {
   const [pedidos, setPedidos] = useState<any[]>([])
@@ -45,34 +44,24 @@ export default function EntregadorPage() {
     }
   }
 
-  // --- FUNÇÃO DE MAPAS CORRIGIDA (VERSÃO BLINDADA) ---
+  // --- FUNÇÃO DE MAPAS ---
   const abrirGoogleMaps = (listaPedidos: any[]) => {
     if (listaPedidos.length === 0) return
 
     const destinos = listaPedidos.map(p => {
-      // Endereço Bruto: "Rua Fagundes Santiago, Nº 492 - CEP: 78120510"
-      
       let ruaENumero = p.cliente.endereco
-        // Remove CEP e o número do cep (ex: CEP: 12345-678 ou CEP 12345678)
         .replace(/CEP[:\s]*\d{5}[-]?\d{3}/gi, '')
         .replace(/CEP[:\s]*\d+/gi, '') 
-        // Remove "Nº" ou "nº"
         .replace(/Nº/gi, '')
-        // Remove traços soltos
         .replace(/-/g, ' ')
-        // Remove espaços duplos
         .replace(/\s+/g, ' ')
         .trim()
       
-      // Remove vírgula final se tiver
       if (ruaENumero.endsWith(',')) ruaENumero = ruaENumero.slice(0, -1)
 
-      // MONTAGEM INTELIGENTE: Rua 123, Bairro, Estado
-      // O Google acha melhor a cidade pelo bairro do que forçar uma cidade errada
       return `${ruaENumero}, ${p.cliente.bairro}, ${ESTADO_PADRAO}`
     })
 
-    // Separa o último (Destino) dos outros (Paradas)
     const destinoFinal = encodeURIComponent(destinos.pop() || "")
     const paradas = destinos.map(e => encodeURIComponent(e)).join('|')
 
@@ -85,36 +74,46 @@ export default function EntregadorPage() {
     window.open(urlMaps, '_blank')
   }
 
+  // --- AÇÃO 1: INICIAR NOVA ROTA (Muda Status + Mapa) ---
   const handleGerarRota = async () => {
-    if (selecionados.length === 0) return toast.error('Selecione pelo menos um pedido')
-
     const pedidosRota = pedidos.filter(p => selecionados.includes(p.id))
     
+    if (pedidosRota.length === 0) return
+
     toast.loading('Iniciando rota...')
     await iniciarRotaEntrega(selecionados)
     toast.dismiss()
     toast.success('Rota iniciada!')
 
     abrirGoogleMaps(pedidosRota)
-    
     setSelecionados([])
     carregar()
   }
 
-  const handleReabrirRota = () => {
-    const emRota = pedidos.filter(p => p.status === 'SAIU_ENTREGA')
-    abrirGoogleMaps(emRota)
+  // --- AÇÃO 2: VER MAPA (Só Mapa) ---
+  const handleVerMapa = () => {
+    const pedidosRota = pedidos.filter(p => selecionados.includes(p.id))
+    if (pedidosRota.length === 0) return
+    
+    abrirGoogleMaps(pedidosRota)
+    setSelecionados([])
   }
 
   const handleEntregue = async (id: string) => {
     if(!confirm('Confirmar entrega realizada?')) return
     await finalizarEntrega(id)
     toast.success('Entrega baixada!')
+    // Remove da seleção se tiver selecionado
+    setSelecionados(prev => prev.filter(s => s !== id))
     carregar()
   }
 
   const pendentes = pedidos.filter(p => p.status === 'EM_PREPARO')
   const emRota = pedidos.filter(p => p.status === 'SAIU_ENTREGA')
+
+  // Verifica o que foi selecionado para mostrar o botão certo
+  const temPendenteSelecionado = pendentes.some(p => selecionados.includes(p.id))
+  const temEmRotaSelecionado = emRota.some(p => selecionados.includes(p.id))
 
   return (
     <div className="min-h-screen bg-gray-100 pb-32">
@@ -132,7 +131,7 @@ export default function EntregadorPage() {
 
       <div className="p-4 space-y-6">
         
-        {/* LISTA 1: PENDENTES */}
+        {/* LISTA 1: PENDENTES (SELECIONÁVEL) */}
         {pendentes.length > 0 && (
           <div>
             <h2 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
@@ -167,49 +166,72 @@ export default function EntregadorPage() {
           </div>
         )}
 
-        {/* LISTA 2: EM ROTA */}
+        {/* LISTA 2: EM ROTA (AGORA SELECIONÁVEL TAMBÉM) */}
         {emRota.length > 0 && (
           <div>
             <h2 className="font-bold text-gray-700 mb-2 flex items-center gap-2 mt-4">
               <Navigation size={18} /> Em Rota ({emRota.length})
             </h2>
+            <p className="text-xs text-gray-500 mb-2">Selecione para ver o mapa novamente ou clique em Baixar para finalizar.</p>
+            
             <div className="space-y-3">
               {emRota.map(pedido => (
-                <div key={pedido.id} className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-green-500">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-bold text-lg">#{pedido.numero} - {pedido.cliente.nome}</h3>
-                      
-                      {/* Endereço Visual Limpo */}
-                      <p className="text-sm text-gray-600 font-medium">
-                        {pedido.cliente.endereco.replace('CEP:', '').split('-')[0]}
-                      </p>
-                      
-                      <p className="text-xs text-gray-500">{pedido.cliente.bairro}</p>
-                      <div className="mt-2 text-xs bg-gray-100 inline-block px-2 py-1 rounded">
-                        Cobrar: <span className="font-bold text-red-600">R$ {pedido.total.toFixed(2)}</span> ({pedido.formaPagamento})
-                        {pedido.trocoPara && <span> | Troco: {pedido.trocoPara}</span>}
+                <div 
+                  key={pedido.id} 
+                  // Adicionei lógica de seleção visual aqui também
+                  className={`bg-white rounded-xl shadow-sm border-2 transition-all ${
+                    selecionados.includes(pedido.id) ? 'border-green-500 bg-green-50' : 'border-transparent'
+                  }`}
+                  onClick={() => toggleSelecao(pedido.id)}
+                >
+                  <div className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex gap-3 items-start">
+                        
+                        {/* Checkbox Visual para Em Rota */}
+                        <div className={`w-6 h-6 mt-1 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
+                          selecionados.includes(pedido.id) ? 'bg-green-500 border-green-500' : 'border-gray-300'
+                        }`}>
+                          {selecionados.includes(pedido.id) && <CheckCircle size={14} className="text-white" />}
+                        </div>
+
+                        <div>
+                          <h3 className="font-bold text-lg">#{pedido.numero} - {pedido.cliente.nome}</h3>
+                          <p className="text-sm text-gray-600 font-medium">
+                            {pedido.cliente.endereco.replace('CEP:', '').split('-')[0]}
+                          </p>
+                          <p className="text-xs text-gray-500">{pedido.cliente.bairro}</p>
+                          <div className="mt-2 text-xs bg-gray-100 inline-block px-2 py-1 rounded">
+                            Cobrar: <span className="font-bold text-red-600">R$ {pedido.total.toFixed(2)}</span>
+                          </div>
+                        </div>
                       </div>
+                      
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleEntregue(pedido.id); }}
+                        className="bg-green-600 text-white p-3 rounded-xl flex flex-col items-center gap-1 shadow-lg active:scale-95"
+                      >
+                        <CheckCircle size={24} />
+                        <span className="text-[10px] font-bold">BAIXAR</span>
+                      </button>
                     </div>
+
                     <button 
-                      onClick={(e) => { e.stopPropagation(); handleEntregue(pedido.id); }}
-                      className="bg-green-600 text-white p-3 rounded-xl flex flex-col items-center gap-1 shadow-lg active:scale-95"
+                      onClick={(e) => { e.stopPropagation(); toggleDetalhes(pedido.id); }} 
+                      className="w-full mt-3 pt-2 border-t flex items-center justify-center gap-1 text-xs text-gray-400"
                     >
-                      <CheckCircle size={24} />
-                      <span className="text-[10px] font-bold">BAIXAR</span>
+                      {expandidos.includes(pedido.id) ? 'Ocultar itens' : 'Ver itens'} 
+                      {expandidos.includes(pedido.id) ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
                     </button>
+                    
+                    {expandidos.includes(pedido.id) && (
+                      <div className="mt-2 bg-gray-50 p-2 rounded text-sm space-y-1">
+                        {pedido.itens.map((item: any) => (
+                          <p key={item.id}>• {item.quantidade}x {item.produto.nome}</p>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <button onClick={() => toggleDetalhes(pedido.id)} className="w-full mt-3 pt-2 border-t flex items-center justify-center gap-1 text-xs text-gray-400">
-                    {expandidos.includes(pedido.id) ? 'Ocultar itens' : 'Ver itens'} 
-                    {expandidos.includes(pedido.id) ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
-                  </button>
-                  {expandidos.includes(pedido.id) && (
-                    <div className="mt-2 bg-gray-50 p-2 rounded text-sm space-y-1">
-                      {pedido.itens.map((item: any) => (
-                        <p key={item.id}>• {item.quantidade}x {item.produto.nome}</p>
-                      ))}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -224,25 +246,41 @@ export default function EntregadorPage() {
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 flex flex-col gap-2">
-        {selecionados.length > 0 && (
-          <button 
-            onClick={handleGerarRota}
-            className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg animate-in slide-in-from-bottom"
-          >
-            <Navigation /> INICIAR {selecionados.length} ENTREGAS
-          </button>
-        )}
+      {/* FOOTER FLUTUANTE DE AÇÕES */}
+      {selecionados.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 flex flex-col gap-2 animate-in slide-in-from-bottom">
+          <div className="flex justify-between items-center mb-1 px-1">
+            <span className="text-sm font-bold text-gray-700">{selecionados.length} selecionado(s)</span>
+            <button onClick={() => setSelecionados([])} className="text-xs text-red-500 font-bold p-2">CANCELAR</button>
+          </div>
 
-        {emRota.length > 0 && selecionados.length === 0 && (
-          <button 
-            onClick={handleReabrirRota}
-            className="w-full bg-green-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg"
-          >
-            <Map /> REABRIR MAPA DA ROTA
-          </button>
-        )}
-      </div>
+          {/* MOSTRA BOTÃO DIFERENTE DEPENDENDO DO QUE ESTÁ SELECIONADO */}
+          {temPendenteSelecionado && !temEmRotaSelecionado && (
+            <button 
+              onClick={handleGerarRota}
+              className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg"
+            >
+              <Navigation /> INICIAR ROTA
+            </button>
+          )}
+
+          {temEmRotaSelecionado && !temPendenteSelecionado && (
+            <button 
+              onClick={handleVerMapa}
+              className="w-full bg-green-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg"
+            >
+              <Map /> VER MAPA DOS SELECIONADOS
+            </button>
+          )}
+
+          {/* Se misturar (pendente + em rota), avisa pra selecionar um tipo só */}
+          {temPendenteSelecionado && temEmRotaSelecionado && (
+            <div className="w-full bg-gray-200 text-gray-500 font-bold py-3 rounded-xl flex items-center justify-center text-xs text-center">
+              Selecione apenas Pendentes ou apenas Em Rota
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

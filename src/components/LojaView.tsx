@@ -1,7 +1,8 @@
+// src/components/LojaView.tsx
 'use client'
 
 import StatusPedidoBtn from './StatusPedidoBtn'
-import { useState, useEffect } from 'react' // <--- useEffect importado
+import { useState, useEffect } from 'react'
 import { useCarrinho } from '@/hooks/useCarrinho'
 import { criarPedido, buscarClientePorTelefone, calcularTaxaEntrega } from '@/lib/actions'
 import { toast } from 'sonner'
@@ -42,14 +43,13 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     { id: 'BEBIDA', nome: 'Bebidas', icon: Coffee, emoji: '🥤' },
   ]
 
-  // --- TRAVAR SCROLL DO FUNDO ---
+  // TRAVAR SCROLL
   useEffect(() => {
     if (modalAberto || carrinhoAberto) {
-      document.body.style.overflow = 'hidden' // Trava
+      document.body.style.overflow = 'hidden'
     } else {
-      document.body.style.overflow = 'unset'  // Destrava
+      document.body.style.overflow = 'unset'
     }
-    // Limpeza ao desmontar
     return () => { document.body.style.overflow = 'unset' }
   }, [modalAberto, carrinhoAberto])
 
@@ -296,28 +296,36 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
         </div>
       )}
 
-      {/* MODAL DE PRODUTO: Fundo bloqueado para cliques */}
+      {/* MODAL DE PRODUTO ATUALIZADO: Imagem dentro do scroll */}
       {modalAberto && produtoSelecionado && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center">
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-lg max-h-[90vh] rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col animate-in slide-in-from-bottom">
-             <div className="relative h-48 bg-gray-100">
-              {produtoSelecionado.imagem ? <img src={produtoSelecionado.imagem} alt={produtoSelecionado.nome} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon size={48} className="text-gray-300" /></div>}
-              <button onClick={() => setModalAberto(false)} className="absolute top-4 right-4 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow"><X size={18} /></button>
-            </div>
-            <div className="p-5 overflow-y-auto">
-              <h2 className="text-2xl font-bold">{produtoSelecionado.nome}</h2>
-              <p className="text-gray-500 mt-2">{produtoSelecionado.descricao}</p>
-              {produtoSelecionado.categoria === 'MISTURA' && (
-                <div className="mt-6 space-y-2"><h3 className="font-bold mb-2">Escolha o tamanho:</h3>
-                  {tamanhos.map((tam: any) => (
-                    <label key={tam.id} className={`flex justify-between items-center p-4 rounded-xl border-2 cursor-pointer ${tamanhoId === tam.id ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}>
-                      <div className="flex items-center gap-3"><div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${tamanhoId === tam.id ? 'border-red-500 bg-red-500' : 'border-gray-300'}`}>{tamanhoId === tam.id && <Check size={12} className="text-white" />}</div><div><p className="font-semibold">{tam.nome}</p><p className="text-sm text-gray-500">{tam.descricao}</p></div></div><span className="font-bold">R$ {tam.preco.toFixed(2)}</span><input type="radio" name="tamanho" value={tam.id} checked={tamanhoId === tam.id} onChange={(e) => setTamanhoId(e.target.value)} className="hidden" />
-                    </label>
-                  ))}
+             
+             {/* ÁREA ROLÁVEL (Imagem + Conteúdo) */}
+             <div className="flex-1 overflow-y-auto">
+                <div className="relative h-56 bg-gray-100">
+                  {produtoSelecionado.imagem ? <img src={produtoSelecionado.imagem} alt={produtoSelecionado.nome} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon size={48} className="text-gray-300" /></div>}
+                  <button onClick={() => setModalAberto(false)} className="absolute top-4 right-4 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center shadow-lg"><X size={20} /></button>
                 </div>
-              )}
-              <div className="mt-6"><h3 className="font-bold mb-2">Observações:</h3><textarea value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ex: Sem cebola..." className="w-full p-3 border-2 border-gray-200 rounded-xl resize-none" rows={2} /></div>
-            </div>
+
+                <div className="p-5">
+                  <h2 className="text-2xl font-bold">{produtoSelecionado.nome}</h2>
+                  <p className="text-gray-500 mt-2">{produtoSelecionado.descricao}</p>
+                  
+                  {produtoSelecionado.categoria === 'MISTURA' && (
+                    <div className="mt-6 space-y-2"><h3 className="font-bold mb-2">Escolha o tamanho:</h3>
+                      {tamanhos.map((tam: any) => (
+                        <label key={tam.id} className={`flex justify-between items-center p-4 rounded-xl border-2 cursor-pointer ${tamanhoId === tam.id ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}>
+                          <div className="flex items-center gap-3"><div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${tamanhoId === tam.id ? 'border-red-500 bg-red-500' : 'border-gray-300'}`}>{tamanhoId === tam.id && <Check size={12} className="text-white" />}</div><div><p className="font-semibold">{tam.nome}</p><p className="text-sm text-gray-500">{tam.descricao}</p></div></div><span className="font-bold">R$ {tam.preco.toFixed(2)}</span><input type="radio" name="tamanho" value={tam.id} checked={tamanhoId === tam.id} onChange={(e) => setTamanhoId(e.target.value)} className="hidden" />
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-6"><h3 className="font-bold mb-2">Observações:</h3><textarea value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ex: Sem cebola..." className="w-full p-3 border-2 border-gray-200 rounded-xl resize-none" rows={2} /></div>
+                </div>
+             </div>
+
+            {/* RODAPÉ FIXO */}
             <div className="p-5 border-t bg-gray-50 flex gap-4">
                <div className="flex items-center bg-white border rounded-xl"><button onClick={() => setQtd(Math.max(1, qtd - 1))} className="p-3"><Minus size={18}/></button><span className="w-8 text-center font-bold">{qtd}</span><button onClick={() => setQtd(qtd + 1)} className="p-3"><Plus size={18}/></button></div>
                <button onClick={adicionarAoCarrinho} disabled={!tamanhoId && produtoSelecionado.categoria === 'MISTURA'} className="flex-1 bg-red-600 text-white font-bold rounded-xl flex items-center justify-center gap-2"><span>Adicionar R$ {calcularPrecoModal().toFixed(2)}</span></button>
@@ -326,7 +334,6 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
         </div>
       )}
 
-      {/* DRAWER DO CHECKOUT: Fundo bloqueado para cliques */}
       {carrinhoAberto && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm">
           <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white flex flex-col animate-in slide-in-from-right">

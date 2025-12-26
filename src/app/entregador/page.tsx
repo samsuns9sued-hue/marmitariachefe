@@ -6,7 +6,7 @@ import { MapPin, Navigation, CheckCircle, Package, RefreshCw, ChevronDown, Chevr
 import { toast } from 'sonner'
 
 // --- ⚠️ DEFINA SUA CIDADE AQUI ---
-const CIDADE_PADRAO = "Várzea Grande - MT" // Ou Várzea Grande, depende de onde é a maioria
+const CIDADE_PADRAO = "Cuiabá - MT" 
 // ---------------------------------
 
 export default function EntregadorPage() {
@@ -44,28 +44,38 @@ export default function EntregadorPage() {
     }
   }
 
-  // --- FUNÇÃO DE LIMPEZA DE ENDEREÇO ---
+  // --- FUNÇÃO CORRIGIDA PARA MÚLTIPLAS ROTAS ---
   const abrirGoogleMaps = (listaPedidos: any[]) => {
     if (listaPedidos.length === 0) return
 
-    const destinos = listaPedidos.map(p => {
-      // O endereço vem do banco assim: "Rua Tal, Nº 123 - CEP: 00000"
-      // Vamos limpar para ficar: "Rua Tal, 123"
-      
+    // 1. Limpa e formata todos os endereços
+    const enderecosFormatados = listaPedidos.map(p => {
       let enderecoLimpo = p.cliente.endereco
-        .replace('Nº', '')       // Tira o texto "Nº"
-        .replace(/CEP: \d+/, '') // Tira o CEP (Google acha melhor sem CEP em rotas)
-        .replace('-', '')        // Tira traços soltos
-        .trim()                  // Tira espaços do começo/fim
-
-      // Remove vírgulas duplas se sobrarem
+        .replace('Nº', '')
+        .replace(/CEP: \d+/, '')
+        .replace('-', '')
+        .trim()
+      
       enderecoLimpo = enderecoLimpo.replace(', ,', ',')
+      
+      // Retorna o endereço limpo sem encode ainda
+      return `${enderecoLimpo}, ${p.cliente.bairro}, ${CIDADE_PADRAO}`
+    })
 
-      // Monta string final: Rua X 123, Bairro, Cidade
-      return encodeURIComponent(`${enderecoLimpo}, ${p.cliente.bairro}, ${CIDADE_PADRAO}`)
-    }).join('/')
+    // 2. Separa o último endereço (Destino Final) dos outros (Paradas/Waypoints)
+    // O Google exige um destino final e uma lista de paradas no meio
+    const destinoFinal = encodeURIComponent(enderecosFormatados.pop() || "")
+    const paradas = enderecosFormatados.map(e => encodeURIComponent(e)).join('|') // O separador é |
 
-    const urlMaps = `https://www.google.com/maps/dir//${destinos}`
+    // 3. Monta a URL Oficial
+    // api=1: Força abrir no modo navegação
+    // travelmode=motorcycle: Modo moto (pode ser driving)
+    let urlMaps = `https://www.google.com/maps/dir/?api=1&destination=${destinoFinal}&travelmode=motorcycle`
+
+    // Se tiver paradas no meio, adiciona na URL
+    if (paradas.length > 0) {
+      urlMaps += `&waypoints=${paradas}`
+    }
     
     window.open(urlMaps, '_blank')
   }
@@ -164,12 +174,9 @@ export default function EntregadorPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-bold text-lg">#{pedido.numero} - {pedido.cliente.nome}</h3>
-                      
-                      {/* Endereço Visual Limpo */}
                       <p className="text-sm text-gray-600 font-medium">
                         {pedido.cliente.endereco.replace('CEP:', '').split('-')[0]}
                       </p>
-                      
                       <p className="text-xs text-gray-500">{pedido.cliente.bairro}</p>
                       <div className="mt-2 text-xs bg-gray-100 inline-block px-2 py-1 rounded">
                         Cobrar: <span className="font-bold text-red-600">R$ {pedido.total.toFixed(2)}</span> ({pedido.formaPagamento})

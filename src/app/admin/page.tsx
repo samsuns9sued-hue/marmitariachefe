@@ -54,36 +54,56 @@ export default function AdminDashboard() {
     }, 100)
   }
 
-  // --- NOVA FUNÇÃO: GERAR MENSAGEM WHATSAPP PADRONIZADA ---
-  const gerarLinkZapConfirmacao = (pedido: any) => {
-    const telefone = pedido.cliente.telefone.replace(/\D/g, '')
-    const primeiroNome = pedido.cliente.nome.split(' ')[0]
-    
-    // Lista os itens para a mensagem
-    const itensMsg = pedido.itens.map((i: any) => {
-      let itemTexto = `▪️ ${i.quantidade}x ${i.produto.nome}`
-      if (i.tamanho) itemTexto += ` (${i.tamanho.nome})`
-      return itemTexto
-    }).join('\n')
+// --- FUNÇÃO: GERAR LINK WHATSAPP PADRONIZADO ---
+const gerarLinkZapConfirmacao = (pedido: any) => {
+  const telefone = pedido.cliente.telefone.replace(/\D/g, '')
+  const primeiroNome = pedido.cliente.nome.split(' ')[0]
+  
+  // Formata os itens do pedido
+  const itensFormatados = pedido.itens
+    .map((item: any) => {
+      const tamanho = item.tamanho ? ` (${item.tamanho.nome})` : ''
+      return `   ▫️ ${item.quantidade}x ${item.produto.nome}${tamanho}`
+    })
+    .join('\n')
 
-    const mensagem = 
-`Olá *${primeiroNome}*! Tudo bem? 👋😃
-Aqui é da *Marmitaria do Chefe*.
+  // Formata o valor total
+  const totalFormatado = pedido.total.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  })
 
-Recebemos seu pedido com sucesso! ✅
-Já estamos preparando com todo carinho. 🥘❤️
+  // Monta a mensagem
+  const linhas = [
+    `Oii *${primeiroNome}*! Tudo bem? 👋`,
+    `Aqui é da *Marmitaria do Chefe* 👨‍🍳`,
+    ``,
+    `✅ Recebemos seu pedido com sucesso!`,
+    `Já estamos preparando com muito carinho 💚`,
+    ``,
+    `┌─────────────────────────┐`,
+    `│  📋 *PEDIDO #${pedido.numero}*`,
+    `└─────────────────────────┘`,
+    ``,
+    itensFormatados,
+    ``,
+    `💰 *Total:* ${totalFormatado}`,
+    `📍 *Entrega:* ${pedido.cliente.endereco}`,
+    ``,
+    `─────────────────────────`,
+    ``,
+    `🛵 Assim que sair para entrega`,
+    `te avisamos por aqui!`,
+    ``,
+    `Obrigado pela preferência! 🙏`,
+    `*Marmitaria do Chefe* 🍽️`
+  ]
 
-*📝 RESUMO DO PEDIDO #${pedido.numero}:*
-${itensMsg}
-
-*💰 Total:* R$ ${pedido.total.toFixed(2)}
-*📍 Entrega em:* ${pedido.cliente.endereco}
-
-Assim que sair para entrega te avisamos! 🛵💨`
-
-    return `https://wa.me/55${telefone}?text=${encodeURIComponent(mensagem)}`
-  }
-  // --------------------------------------------------------
+  const mensagem = linhas.join('\n')
+  
+  return `https://wa.me/55${telefone}?text=${encodeURIComponent(mensagem)}`
+}
+// ------------------------------------------------
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 pb-20">

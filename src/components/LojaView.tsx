@@ -1,8 +1,7 @@
-// src/components/LojaView.tsx
 'use client'
 
 import StatusPedidoBtn from './StatusPedidoBtn'
-import { useState } from 'react'
+import { useState, useEffect } from 'react' // <--- useEffect importado
 import { useCarrinho } from '@/hooks/useCarrinho'
 import { criarPedido, buscarClientePorTelefone, calcularTaxaEntrega } from '@/lib/actions'
 import { toast } from 'sonner'
@@ -28,7 +27,6 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
   const [buscandoCep, setBuscandoCep] = useState(false)
   const [buscandoGeo, setBuscandoGeo] = useState(false)
 
-  // Estado da Taxa de Entrega Dinâmica
   const [taxaEntregaCalculada, setTaxaEntregaCalculada] = useState<number | null>(null)
   const [distanciaKm, setDistanciaKm] = useState<string>('')
 
@@ -43,6 +41,17 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     { id: 'COMPLEMENTO', nome: 'Porções', icon: Plus, emoji: '🍟' },
     { id: 'BEBIDA', nome: 'Bebidas', icon: Coffee, emoji: '🥤' },
   ]
+
+  // --- TRAVAR SCROLL DO FUNDO ---
+  useEffect(() => {
+    if (modalAberto || carrinhoAberto) {
+      document.body.style.overflow = 'hidden' // Trava
+    } else {
+      document.body.style.overflow = 'unset'  // Destrava
+    }
+    // Limpeza ao desmontar
+    return () => { document.body.style.overflow = 'unset' }
+  }, [modalAberto, carrinhoAberto])
 
   const abrirModal = (produto: any) => {
     setProdutoSelecionado(produto)
@@ -81,14 +90,10 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     toast.success('Adicionado ao carrinho!', { icon: '🛒' })
   }
 
-  // --- CÁLCULO DE TAXA ---
   const atualizarTaxa = async (lat: number, lng: number) => {
     const res = await calcularTaxaEntrega(lat, lng)
     setTaxaEntregaCalculada(res.taxa)
     setDistanciaKm(res.distancia)
-    
-    // Feedback visual sutil (toast opcional para não poluir, pode descomentar se quiser)
-    // if (res.taxa === 0) toast.success(`Cálculo: Entrega Grátis! (${res.distancia}km)`)
   }
 
   const buscarCep = async (cepInput: string) => {
@@ -103,12 +108,9 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
         
         if (!dataViaCep.erro) {
           setCliente(prev => ({ ...prev, endereco: dataViaCep.logradouro, bairro: dataViaCep.bairro }))
-          
-          // Busca coordenadas do CEP para calcular taxa
           const termoBusca = `${dataViaCep.logradouro}, ${dataViaCep.bairro}, ${dataViaCep.localidade}, Mato Grosso`
           const resGeo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(termoBusca)}&limit=1`)
           const dataGeo = await resGeo.json()
-          
           if (dataGeo && dataGeo[0]) {
             atualizarTaxa(parseFloat(dataGeo[0].lat), parseFloat(dataGeo[0].lon))
           }
@@ -133,7 +135,6 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
       try {
         const { latitude, longitude } = pos.coords
         await atualizarTaxa(latitude, longitude)
-
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
         const data = await res.json()
         if (data && data.address) {
@@ -156,7 +157,6 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     })
   }
 
-  // --- CORREÇÃO + ATUALIZAÇÃO DE TAXA AUTOMÁTICA ---
   const avancarIdentificacao = async () => {
     if (!cliente.nome.trim() || cliente.telefone.length < 8) {
       toast.error('Preencha Nome e WhatsApp')
@@ -165,7 +165,6 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     const res = await buscarClientePorTelefone(cliente.telefone)
     
     if (res.success && res.cliente) {
-      // 1. Parser do Endereço Antigo
       let rua = res.cliente.endereco || ''
       let numero = ''
       let cep = ''
@@ -193,21 +192,15 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
         referencia: res.cliente.referencia || ''
       }))
 
-      // 2. NOVA LÓGICA: Calcular taxa silenciosamente baseado no endereço recuperado
       if (rua && bairro) {
         try {
-          // Busca "Rua X, Bairro Y, Mato Grosso" para achar coordenadas
           const termoBusca = `${rua}, ${bairro}, Mato Grosso, Brasil`
           const resGeo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(termoBusca)}&limit=1`)
           const dataGeo = await resGeo.json()
-          
           if (dataGeo && dataGeo[0]) {
-            // Atualiza a taxa automaticamente!
             await atualizarTaxa(parseFloat(dataGeo[0].lat), parseFloat(dataGeo[0].lon))
           }
-        } catch (e) {
-          console.log('Erro ao calcular taxa automática', e)
-        }
+        } catch (e) { console.log('Erro ao calcular taxa automática', e) }
       }
 
       setEtapa(2)
@@ -241,11 +234,7 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
 
     if (res.success) {
       localStorage.setItem('marmitaria_telefone', cliente.telefone) 
-      toast.success('Pedido Realizado com Sucesso!', { 
-        description: 'Você receberá a confirmação no seu WhatsApp em instantes.',
-        duration: 5000,
-        icon: '🎉'
-      })
+      toast.success('Pedido Realizado com Sucesso!', { description: 'Aguarde a confirmação no WhatsApp.', duration: 5000, icon: '🎉' })
       carrinho.limpar()
       setCarrinhoAberto(false)
       setEtapa(1)
@@ -272,7 +261,6 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
 
   return (
     <div className="pb-28 -mt-1">
-      
       <StatusPedidoBtn /> 
 
       <nav className="sticky top-0 bg-white z-20 shadow-sm">
@@ -308,8 +296,9 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
         </div>
       )}
 
+      {/* MODAL DE PRODUTO: Fundo bloqueado para cliques */}
       {modalAberto && produtoSelecionado && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={() => setModalAberto(false)}>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center">
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-lg max-h-[90vh] rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col animate-in slide-in-from-bottom">
              <div className="relative h-48 bg-gray-100">
               {produtoSelecionado.imagem ? <img src={produtoSelecionado.imagem} alt={produtoSelecionado.nome} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon size={48} className="text-gray-300" /></div>}
@@ -337,8 +326,9 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
         </div>
       )}
 
+      {/* DRAWER DO CHECKOUT: Fundo bloqueado para cliques */}
       {carrinhoAberto && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={() => setCarrinhoAberto(false)}>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm">
           <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white flex flex-col animate-in slide-in-from-right">
             <div className="p-4 border-b flex justify-between items-center bg-white">
               <div><h2 className="font-bold text-xl">{etapa === 1 ? 'Identificação' : etapa === 2 ? 'Confirmação' : etapa === 3 ? 'Endereço' : 'Pagamento'}</h2><div className="flex gap-1 mt-1">{[1, 2, 3, 4].map(s => (<div key={s} className={`h-1 w-8 rounded-full transition-colors ${etapa >= s ? 'bg-red-600' : 'bg-gray-200'}`} />))}</div></div>

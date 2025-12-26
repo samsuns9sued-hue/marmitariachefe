@@ -316,3 +316,24 @@ export async function finalizarEntrega(id: string) {
   revalidatePath('/pedir')
   return { success: true }
 }
+
+// --- LOGIN DO ENTREGADOR ---
+
+export async function verificarLoginEntregador(_prevState: any, formData: FormData) {
+  const senha = formData.get('senha') as string
+  // Pega a senha do .env ou usa uma padrão se não tiver configurado
+  const senhaCorreta = process.env.ENTREGADOR_PASSWORD || '123456'
+
+  if (senha === senhaCorreta) {
+    // Cria um cookie de sessão específico para entregador
+    cookies().set('entregador_session', 'true', { httpOnly: true, maxAge: 60 * 60 * 24 }) // 24 horas
+    redirect('/entregador')
+  } else {
+    return { error: 'Senha incorreta' }
+  }
+}
+
+export async function logoutEntregador() {
+  cookies().delete('entregador_session')
+  redirect('/entregador/login')
+}

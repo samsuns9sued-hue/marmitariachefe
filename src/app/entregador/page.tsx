@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getPedidosParaEntrega, iniciarRotaEntrega, finalizarEntrega } from '@/lib/actions'
-import { MapPin, Navigation, CheckCircle, Package, RefreshCw, ChevronDown, ChevronUp, Map } from 'lucide-react'
+import { getPedidosParaEntrega, iniciarRotaEntrega, finalizarEntrega, logoutEntregador } from '@/lib/actions'
+import { MapPin, Navigation, CheckCircle, Package, RefreshCw, ChevronDown, ChevronUp, Map, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
 
 // --- ⚠️ DEFINA SUA CIDADE AQUI ---
@@ -117,6 +117,8 @@ export default function EntregadorPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 pb-32">
+      
+      {/* CABEÇALHO COM LOGOUT */}
       <header className="bg-gray-900 text-white p-4 sticky top-0 z-10 shadow-md flex justify-between items-center">
         <div>
           <h1 className="font-bold text-xl flex items-center gap-2">
@@ -124,9 +126,16 @@ export default function EntregadorPage() {
           </h1>
           <p className="text-xs text-gray-400">Região: {ESTADO_PADRAO}</p>
         </div>
-        <button onClick={carregar} className="p-2 bg-gray-800 rounded-full">
-          <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-        </button>
+        
+        <div className="flex gap-2">
+          <button onClick={carregar} className="p-2 bg-gray-800 rounded-full hover:bg-gray-700">
+            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+          </button>
+          
+          <button onClick={() => logoutEntregador()} className="p-2 bg-red-600 rounded-full hover:bg-red-700 text-white">
+            <LogOut size={20} />
+          </button>
+        </div>
       </header>
 
       <div className="p-4 space-y-6">

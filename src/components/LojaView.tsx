@@ -1,7 +1,7 @@
 // src/components/LojaView.tsx
 'use client'
 
-import StatusPedidoBtn from './StatusPedidoBtn' // <--- Mantido
+import StatusPedidoBtn from './StatusPedidoBtn'
 import { useState } from 'react'
 import { useCarrinho } from '@/hooks/useCarrinho'
 import { criarPedido, buscarClientePorTelefone, calcularTaxaEntrega } from '@/lib/actions'
@@ -86,8 +86,9 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     const res = await calcularTaxaEntrega(lat, lng)
     setTaxaEntregaCalculada(res.taxa)
     setDistanciaKm(res.distancia)
-    if (res.taxa === 0) toast.success(`Entrega Grátis! (${res.distancia}km)`)
-    else toast.info(`Taxa de R$ ${res.taxa.toFixed(2)} aplicada (${res.distancia}km)`)
+    
+    // Feedback visual sutil (toast opcional para não poluir, pode descomentar se quiser)
+    // if (res.taxa === 0) toast.success(`Cálculo: Entrega Grátis! (${res.distancia}km)`)
   }
 
   const buscarCep = async (cepInput: string) => {
@@ -97,15 +98,14 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     if (cepLimpo.length === 8) {
       setBuscandoCep(true)
       try {
-        // 1. Pega endereço pelo CEP
         const resViaCep = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
         const dataViaCep = await resViaCep.json()
         
         if (!dataViaCep.erro) {
           setCliente(prev => ({ ...prev, endereco: dataViaCep.logradouro, bairro: dataViaCep.bairro }))
           
-          // 2. Tenta pegar coordenadas desse endereço para calcular taxa
-          const termoBusca = `${dataViaCep.logradouro}, ${dataViaCep.bairro}, ${dataViaCep.localidade}`
+          // Busca coordenadas do CEP para calcular taxa
+          const termoBusca = `${dataViaCep.logradouro}, ${dataViaCep.bairro}, ${dataViaCep.localidade}, Mato Grosso`
           const resGeo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(termoBusca)}&limit=1`)
           const dataGeo = await resGeo.json()
           
@@ -132,8 +132,6 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     navigator.geolocation.getCurrentPosition(async (pos) => {
       try {
         const { latitude, longitude } = pos.coords
-        
-        // Calcula a taxa na hora com a localização exata
         await atualizarTaxa(latitude, longitude)
 
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
@@ -158,7 +156,7 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     })
   }
 
-  // --- CORREÇÃO APLICADA AQUI: PARSER DE ENDEREÇO ---
+  // --- CORREÇÃO + ATUALIZAÇÃO DE TAXA AUTOMÁTICA ---
   const avancarIdentificacao = async () => {
     if (!cliente.nome.trim() || cliente.telefone.length < 8) {
       toast.error('Preencha Nome e WhatsApp')
@@ -167,38 +165,51 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     const res = await buscarClientePorTelefone(cliente.telefone)
     
     if (res.success && res.cliente) {
-      // LÓGICA NOVA: SEPARAR A STRINGONA EM RUA E NÚMERO
+      // 1. Parser do Endereço Antigo
       let rua = res.cliente.endereco || ''
       let numero = ''
       let cep = ''
 
-      // Se o endereço salvo tem "Nº", vamos quebrar ele
       if (rua.includes('Nº')) {
         const partes = rua.split('Nº')
-        // Parte 0 é a Rua (tirando a vírgula final se tiver)
         rua = partes[0].replace(/,\s*$/, '').trim() 
-        
         const resto = partes[1] || ''
-        
-        // Pega o primeiro número que aparecer depois do "Nº"
         const matchNumero = resto.match(/(\d+)/)
         if (matchNumero) numero = matchNumero[0]
-
-        // Tenta achar o CEP
         if (resto.includes('CEP:')) {
            const matchCep = resto.match(/CEP:\s*([\d-]+)/)
            if (matchCep) cep = matchCep[1].replace(/\D/g, '')
         }
       }
 
+      const bairro = res.cliente.bairro || ''
+
       setCliente(prev => ({
         ...prev,
         endereco: rua,
-        numero: numero, // Agora preenchemos o número!
+        numero: numero,
         cep: cep,
-        bairro: res.cliente.bairro || '',
+        bairro: bairro,
         referencia: res.cliente.referencia || ''
       }))
+
+      // 2. NOVA LÓGICA: Calcular taxa silenciosamente baseado no endereço recuperado
+      if (rua && bairro) {
+        try {
+          // Busca "Rua X, Bairro Y, Mato Grosso" para achar coordenadas
+          const termoBusca = `${rua}, ${bairro}, Mato Grosso, Brasil`
+          const resGeo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(termoBusca)}&limit=1`)
+          const dataGeo = await resGeo.json()
+          
+          if (dataGeo && dataGeo[0]) {
+            // Atualiza a taxa automaticamente!
+            await atualizarTaxa(parseFloat(dataGeo[0].lat), parseFloat(dataGeo[0].lon))
+          }
+        } catch (e) {
+          console.log('Erro ao calcular taxa automática', e)
+        }
+      }
+
       setEtapa(2)
     } else {
       setEtapa(3) 
@@ -211,12 +222,9 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
       return
     }
 
-    // Se a taxa não foi calculada (digitou endereço manual sem CEP), usa a padrão do config ou 0
     const taxaFinal = taxaEntregaCalculada !== null ? taxaEntregaCalculada : config.taxaEntrega
 
     setEnviando(true)
-    
-    // Salva no banco no formato "completo" para o histórico futuro
     const enderecoCompleto = `${cliente.endereco}, Nº ${cliente.numero}${cliente.cep ? ` - CEP: ${cliente.cep}` : ''}`
 
     const payload = {
@@ -232,9 +240,7 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     const res = await criarPedido(payload)
 
     if (res.success) {
-      // SALVA O TELEFONE PARA O CLIENTE VER O PEDIDO DEPOIS
       localStorage.setItem('marmitaria_telefone', cliente.telefone) 
-
       toast.success('Pedido Realizado com Sucesso!', { 
         description: 'Você receberá a confirmação no seu WhatsApp em instantes.',
         duration: 5000,
@@ -262,15 +268,13 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     return 0
   }
 
-  // Define qual taxa mostrar na tela (Calculada ou Padrão do Config)
   const taxaExibir = taxaEntregaCalculada !== null ? taxaEntregaCalculada : config.taxaEntrega
 
   return (
     <div className="pb-28 -mt-1">
       
-      <StatusPedidoBtn /> {/* <--- Mantido o botão flutuante */}
+      <StatusPedidoBtn /> 
 
-      {/* Navegação Sticky */}
       <nav className="sticky top-0 bg-white z-20 shadow-sm">
         <div className="flex gap-2 p-3 overflow-x-auto scrollbar-hide">
           {categorias.map((cat) => (

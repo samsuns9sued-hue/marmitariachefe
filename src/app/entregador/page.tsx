@@ -5,9 +5,9 @@ import { getPedidosParaEntrega, iniciarRotaEntrega, finalizarEntrega } from '@/l
 import { MapPin, Navigation, CheckCircle, Package, RefreshCw, ChevronDown, ChevronUp, Map } from 'lucide-react'
 import { toast } from 'sonner'
 
-// --- ⚠️ IMPORTANTE: CONFIRA O NOME DA SUA CIDADE ---
-const CIDADE_PADRAO = "Várzea Grande - MT" 
-// ---------------------------------------------------
+// --- ⚠️ DEFINA SUA CIDADE AQUI ---
+const CIDADE_PADRAO = "Várzea Grande - MT" // Ou Várzea Grande, depende de onde é a maioria
+// ---------------------------------
 
 export default function EntregadorPage() {
   const [pedidos, setPedidos] = useState<any[]>([])
@@ -44,20 +44,27 @@ export default function EntregadorPage() {
     }
   }
 
-  // --- FUNÇÃO DO MAPA CORRIGIDA ---
+  // --- FUNÇÃO DE LIMPEZA DE ENDEREÇO ---
   const abrirGoogleMaps = (listaPedidos: any[]) => {
     if (listaPedidos.length === 0) return
 
     const destinos = listaPedidos.map(p => {
-      // CORREÇÃO: O 'endereco' no banco JÁ CONTÉM o número e o CEP concatenados.
-      // Não usamos mais p.cliente.numero aqui para evitar o "undefined".
-      const endLimpo = `${p.cliente.endereco} - ${p.cliente.bairro}`
+      // O endereço vem do banco assim: "Rua Tal, Nº 123 - CEP: 00000"
+      // Vamos limpar para ficar: "Rua Tal, 123"
       
-      // Adiciona a cidade para o Google não se perder
-      return encodeURIComponent(`${endLimpo}, ${CIDADE_PADRAO}`)
+      let enderecoLimpo = p.cliente.endereco
+        .replace('Nº', '')       // Tira o texto "Nº"
+        .replace(/CEP: \d+/, '') // Tira o CEP (Google acha melhor sem CEP em rotas)
+        .replace('-', '')        // Tira traços soltos
+        .trim()                  // Tira espaços do começo/fim
+
+      // Remove vírgulas duplas se sobrarem
+      enderecoLimpo = enderecoLimpo.replace(', ,', ',')
+
+      // Monta string final: Rua X 123, Bairro, Cidade
+      return encodeURIComponent(`${enderecoLimpo}, ${p.cliente.bairro}, ${CIDADE_PADRAO}`)
     }).join('/')
 
-    // Formato /dir/ força múltiplos destinos a partir da sua localização
     const urlMaps = `https://www.google.com/maps/dir//${destinos}`
     
     window.open(urlMaps, '_blank')
@@ -157,8 +164,12 @@ export default function EntregadorPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-bold text-lg">#{pedido.numero} - {pedido.cliente.nome}</h3>
-                      {/* CORREÇÃO VISUAL: Removi o .numero aqui também */}
-                      <p className="text-sm text-gray-600 font-medium">{pedido.cliente.endereco}</p>
+                      
+                      {/* Endereço Visual Limpo */}
+                      <p className="text-sm text-gray-600 font-medium">
+                        {pedido.cliente.endereco.replace('CEP:', '').split('-')[0]}
+                      </p>
+                      
                       <p className="text-xs text-gray-500">{pedido.cliente.bairro}</p>
                       <div className="mt-2 text-xs bg-gray-100 inline-block px-2 py-1 rounded">
                         Cobrar: <span className="font-bold text-red-600">R$ {pedido.total.toFixed(2)}</span> ({pedido.formaPagamento})
@@ -198,7 +209,6 @@ export default function EntregadorPage() {
         )}
       </div>
 
-      {/* FOOTER FLUTUANTE DE AÇÕES */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 flex flex-col gap-2">
         {selecionados.length > 0 && (
           <button 

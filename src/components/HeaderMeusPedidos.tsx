@@ -12,9 +12,7 @@ export default function HeaderMeusPedidos() {
   const [isOpen, setIsOpen] = useState(false)
   const [pedidos, setPedidos] = useState<any[]>([])
   
-  // Telefone OFICIAL (logado)
   const [telefone, setTelefone] = useState('')
-  // Telefone que está sendo DIGITADO
   const [inputTel, setInputTel] = useState('')
   
   const [loading, setLoading] = useState(false)
@@ -36,6 +34,17 @@ export default function HeaderMeusPedidos() {
     }
     return () => clearInterval(intervalo)
   }, [isOpen, telefone])
+
+  // --- CORREÇÃO 1: TRAVAR O SCROLL DA PÁGINA DE FUNDO ---
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => { document.body.style.overflow = 'unset' }
+  }, [isOpen])
+  // -------------------------------------------------------
 
   const carregarPedidos = async (tel: string, mostrarLoading = true) => {
     if (!tel) return
@@ -69,7 +78,6 @@ export default function HeaderMeusPedidos() {
     }
   }
 
-  // --- AQUI MUDA O VISUAL DO BOTÃO (Para parecer Header e não Flutuante) ---
   if (!isOpen) {
     return (
       <button 
@@ -84,12 +92,11 @@ export default function HeaderMeusPedidos() {
     )
   }
 
-  // --- DRAWER (MODAL) ---
   return (
-    <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex justify-end animate-in fade-in">
+    // --- CORREÇÃO 2: Z-INDEX 100 PARA FICAR ACIMA DE TUDO ---
+    <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex justify-end animate-in fade-in">
       <div className="w-full max-w-sm bg-white h-full shadow-2xl animate-in slide-in-from-right flex flex-col">
         
-        {/* Header do Drawer */}
         <div className="p-4 bg-red-600 text-white flex justify-between items-center shadow-md">
           <h2 className="font-bold text-lg flex items-center gap-2">
             <ClipboardList /> Meus Pedidos
@@ -99,7 +106,6 @@ export default function HeaderMeusPedidos() {
           </button>
         </div>
 
-        {/* Conteúdo */}
         <div className="flex-1 overflow-y-auto bg-gray-50">
           
           {!telefone ? (

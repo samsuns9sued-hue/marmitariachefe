@@ -1,3 +1,6 @@
 .env
 node_modules
 .next
+android/
+capacitor.config.ts
+capacitor.config.json

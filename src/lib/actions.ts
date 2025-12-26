@@ -267,3 +267,52 @@ export async function buscarPedidosDoCliente(telefone: string) {
     return []
   }
 }
+
+export async function getPedidosParaEntrega() {
+  const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
+
+  return await prisma.pedido.findMany({
+    where: {
+      createdAt: { gte: hoje },
+      OR: [
+        { status: 'EM_PREPARO' },   // Prontos para pegar
+        { status: 'SAIU_ENTREGA' }  // Já na moto (para finalizar)
+      ]
+    },
+    include: {
+      cliente: true,
+      itens: { include: { produto: true } } // Para ele conferir o pacote
+    },
+    orderBy: { createdAt: 'asc' } // Mais antigos primeiro
+  })
+}
+
+export async function iniciarRotaEntrega(ids: string[]) {
+  // Atualiza todos os selecionados para "SAIU_ENTREGA"
+  await prisma.pedido.updateMany({
+    where: { id: { in: ids } },
+    data: { 
+      status: 'SAIU_ENTREGA',
+      saiuEntregaAt: new Date()
+    }
+  })
+  revalidatePath('/entregador')
+  revalidatePath('/admin')
+  revalidatePath('/pedir') // Atualiza pro cliente ver
+  return { success: true }
+}
+
+export async function finalizarEntrega(id: string) {
+  await prisma.pedido.update({
+    where: { id },
+    data: { 
+      status: 'ENTREGUE',
+      entregueAt: new Date()
+    }
+  })
+  revalidatePath('/entregador')
+  revalidatePath('/admin')
+  revalidatePath('/pedir')
+  return { success: true }
+}

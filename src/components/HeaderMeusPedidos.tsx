@@ -17,7 +17,6 @@ export default function HeaderMeusPedidos() {
   
   const [loading, setLoading] = useState(false)
 
-  // Carrega telefone salvo ao abrir
   useEffect(() => {
     const telSalvo = localStorage.getItem('marmitaria_telefone')
     if (telSalvo) {
@@ -26,7 +25,6 @@ export default function HeaderMeusPedidos() {
     }
   }, [])
 
-  // Auto-atualização (Polling)
   useEffect(() => {
     let intervalo: any
     if (isOpen && telefone) {
@@ -35,7 +33,7 @@ export default function HeaderMeusPedidos() {
     return () => clearInterval(intervalo)
   }, [isOpen, telefone])
 
-  // --- CORREÇÃO 1: TRAVAR O SCROLL DA PÁGINA DE FUNDO ---
+  // TRAVAR SCROLL DO FUNDO
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -44,7 +42,6 @@ export default function HeaderMeusPedidos() {
     }
     return () => { document.body.style.overflow = 'unset' }
   }, [isOpen])
-  // -------------------------------------------------------
 
   const carregarPedidos = async (tel: string, mostrarLoading = true) => {
     if (!tel) return
@@ -93,11 +90,11 @@ export default function HeaderMeusPedidos() {
   }
 
   return (
-    // --- CORREÇÃO 2: Z-INDEX 100 PARA FICAR ACIMA DE TUDO ---
-    <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex justify-end animate-in fade-in">
+    // CORREÇÃO AQUI: z-[9999] garante que fique acima de qualquer menu ou botão
+    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex justify-end animate-in fade-in">
       <div className="w-full max-w-sm bg-white h-full shadow-2xl animate-in slide-in-from-right flex flex-col">
         
-        <div className="p-4 bg-red-600 text-white flex justify-between items-center shadow-md">
+        <div className="p-4 bg-red-600 text-white flex justify-between items-center shadow-md z-50">
           <h2 className="font-bold text-lg flex items-center gap-2">
             <ClipboardList /> Meus Pedidos
           </h2>
@@ -106,7 +103,7 @@ export default function HeaderMeusPedidos() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="flex-1 overflow-y-auto bg-gray-50 relative z-40">
           
           {!telefone ? (
             <div className="p-6 flex flex-col justify-center h-full">
@@ -133,7 +130,7 @@ export default function HeaderMeusPedidos() {
             </div>
           ) : (
             <div>
-              <div className="bg-white p-4 border-b flex justify-between items-center sticky top-0 z-10 shadow-sm">
+              <div className="bg-white p-4 border-b flex justify-between items-center sticky top-0 z-50 shadow-sm">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <User size={16} className="text-red-600"/>
                   <span>Cliente: <strong>{telefone}</strong></span>

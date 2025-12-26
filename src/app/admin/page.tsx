@@ -54,56 +54,35 @@ export default function AdminDashboard() {
     }, 100)
   }
 
-// --- FUNÇÃO: GERAR LINK WHATSAPP PADRONIZADO ---
-const gerarLinkZapConfirmacao = (pedido: any) => {
-  const telefone = pedido.cliente.telefone.replace(/\D/g, '')
-  const primeiroNome = pedido.cliente.nome.split(' ')[0]
-  
-  // Formata os itens do pedido
-  const itensFormatados = pedido.itens
-    .map((item: any) => {
-      const tamanho = item.tamanho ? ` (${item.tamanho.nome})` : ''
-      return `   ▫️ ${item.quantidade}x ${item.produto.nome}${tamanho}`
-    })
-    .join('\n')
+  // --- NOVA FUNÇÃO: GERAR MENSAGEM WHATSAPP (ATUALIZADA) ---
+  const gerarLinkZapConfirmacao = (pedido: any) => {
+    const telefone = pedido.cliente.telefone.replace(/\D/g, '')
+    const primeiroNome = pedido.cliente.nome.split(' ')[0]
+    
+    // Lista os itens para a mensagem
+    const itensMsg = pedido.itens.map((i: any) => {
+      let itemTexto = `▪️ ${i.quantidade}x ${i.produto.nome}`
+      if (i.tamanho) itemTexto += ` (${i.tamanho.nome})`
+      return itemTexto
+    }).join('\n')
 
-  // Formata o valor total
-  const totalFormatado = pedido.total.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  })
+    // MENSAGEM LIMPA (Sem ID e sem frase final)
+    const mensagem = 
+`Olá *${primeiroNome}*! Tudo bem? 👋😃
+Aqui é da *Marmitaria do Chefe*.
 
-  // Monta a mensagem
-  const linhas = [
-    `Oii *${primeiroNome}*! Tudo bem? 👋`,
-    `Aqui é da *Marmitaria do Chefe* 👨‍🍳`,
-    ``,
-    `✅ Recebemos seu pedido com sucesso!`,
-    `Já estamos preparando com muito carinho 💚`,
-    ``,
-    `┌─────────────────────────┐`,
-    `│  📋 *PEDIDO #${pedido.numero}*`,
-    `└─────────────────────────┘`,
-    ``,
-    itensFormatados,
-    ``,
-    `💰 *Total:* ${totalFormatado}`,
-    `📍 *Entrega:* ${pedido.cliente.endereco}`,
-    ``,
-    `─────────────────────────`,
-    ``,
-    `🛵 Assim que sair para entrega`,
-    `te avisamos por aqui!`,
-    ``,
-    `Obrigado pela preferência! 🙏`,
-    `*Marmitaria do Chefe* 🍽️`
-  ]
+Recebemos seu pedido com sucesso! ✅
+Já estamos preparando com todo carinho. 🥘❤️
 
-  const mensagem = linhas.join('\n')
-  
-  return `https://wa.me/55${telefone}?text=${encodeURIComponent(mensagem)}`
-}
-// ------------------------------------------------
+*📝 RESUMO DO PEDIDO:*
+${itensMsg}
+
+*💰 Total:* R$ ${pedido.total.toFixed(2)}
+*📍 Entrega em:* ${pedido.cliente.endereco}`
+
+    return `https://wa.me/55${telefone}?text=${encodeURIComponent(mensagem)}`
+  }
+  // --------------------------------------------------------
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 pb-20">
@@ -174,13 +153,13 @@ const gerarLinkZapConfirmacao = (pedido: any) => {
                   <h3 className="font-bold text-lg leading-tight">
                     #{pedido.numero} - {pedido.cliente.nome}
                   </h3>
-                  {/* --- ATUALIZAÇÃO 1: HORÁRIO DO PEDIDO --- */}
+                  {/* --- HORÁRIO DO PEDIDO --- */}
                   <span className="text-xs font-normal text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
                     {format(new Date(pedido.createdAt), 'HH:mm')}
                   </span>
                 </div>
 
-                {/* --- ATUALIZAÇÃO 2: BOTÃO WHATSAPP PROFISSIONAL --- */}
+                {/* --- LINK DO WHATSAPP --- */}
                 <a 
                   href={gerarLinkZapConfirmacao(pedido)} 
                   target="_blank" 

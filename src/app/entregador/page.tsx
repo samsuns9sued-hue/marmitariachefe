@@ -5,9 +5,10 @@ import { getPedidosParaEntrega, iniciarRotaEntrega, finalizarEntrega } from '@/l
 import { MapPin, Navigation, CheckCircle, Package, RefreshCw, ChevronDown, ChevronUp, Map } from 'lucide-react'
 import { toast } from 'sonner'
 
-// --- ⚠️ DEFINA SUA CIDADE AQUI ---
-const CIDADE_PADRAO = "Cuiabá - MT" 
-// ---------------------------------
+// --- ⚠️ MUDANÇA ESTRATÉGICA: USAR APENAS O ESTADO ---
+// Isso permite que o Google decida se é Cuiabá ou Várzea Grande pelo Bairro
+const ESTADO_PADRAO = "Mato Grosso, Brasil" 
+// ---------------------------------------------------
 
 export default function EntregadorPage() {
   const [pedidos, setPedidos] = useState<any[]>([])
@@ -44,35 +45,39 @@ export default function EntregadorPage() {
     }
   }
 
-  // --- FUNÇÃO CORRIGIDA PARA MÚLTIPLAS ROTAS ---
+  // --- FUNÇÃO DE MAPAS CORRIGIDA (VERSÃO BLINDADA) ---
   const abrirGoogleMaps = (listaPedidos: any[]) => {
     if (listaPedidos.length === 0) return
 
-    // 1. Limpa e formata todos os endereços
-    const enderecosFormatados = listaPedidos.map(p => {
-      let enderecoLimpo = p.cliente.endereco
-        .replace('Nº', '')
-        .replace(/CEP: \d+/, '')
-        .replace('-', '')
+    const destinos = listaPedidos.map(p => {
+      // Endereço Bruto: "Rua Fagundes Santiago, Nº 492 - CEP: 78120510"
+      
+      let ruaENumero = p.cliente.endereco
+        // Remove CEP e o número do cep (ex: CEP: 12345-678 ou CEP 12345678)
+        .replace(/CEP[:\s]*\d{5}[-]?\d{3}/gi, '')
+        .replace(/CEP[:\s]*\d+/gi, '') 
+        // Remove "Nº" ou "nº"
+        .replace(/Nº/gi, '')
+        // Remove traços soltos
+        .replace(/-/g, ' ')
+        // Remove espaços duplos
+        .replace(/\s+/g, ' ')
         .trim()
       
-      enderecoLimpo = enderecoLimpo.replace(', ,', ',')
-      
-      // Retorna o endereço limpo sem encode ainda
-      return `${enderecoLimpo}, ${p.cliente.bairro}, ${CIDADE_PADRAO}`
+      // Remove vírgula final se tiver
+      if (ruaENumero.endsWith(',')) ruaENumero = ruaENumero.slice(0, -1)
+
+      // MONTAGEM INTELIGENTE: Rua 123, Bairro, Estado
+      // O Google acha melhor a cidade pelo bairro do que forçar uma cidade errada
+      return `${ruaENumero}, ${p.cliente.bairro}, ${ESTADO_PADRAO}`
     })
 
-    // 2. Separa o último endereço (Destino Final) dos outros (Paradas/Waypoints)
-    // O Google exige um destino final e uma lista de paradas no meio
-    const destinoFinal = encodeURIComponent(enderecosFormatados.pop() || "")
-    const paradas = enderecosFormatados.map(e => encodeURIComponent(e)).join('|') // O separador é |
+    // Separa o último (Destino) dos outros (Paradas)
+    const destinoFinal = encodeURIComponent(destinos.pop() || "")
+    const paradas = destinos.map(e => encodeURIComponent(e)).join('|')
 
-    // 3. Monta a URL Oficial
-    // api=1: Força abrir no modo navegação
-    // travelmode=motorcycle: Modo moto (pode ser driving)
     let urlMaps = `https://www.google.com/maps/dir/?api=1&destination=${destinoFinal}&travelmode=motorcycle`
 
-    // Se tiver paradas no meio, adiciona na URL
     if (paradas.length > 0) {
       urlMaps += `&waypoints=${paradas}`
     }
@@ -118,7 +123,7 @@ export default function EntregadorPage() {
           <h1 className="font-bold text-xl flex items-center gap-2">
             <Navigation className="text-yellow-400" /> Entregas
           </h1>
-          <p className="text-xs text-gray-400">{CIDADE_PADRAO}</p>
+          <p className="text-xs text-gray-400">Região: {ESTADO_PADRAO}</p>
         </div>
         <button onClick={carregar} className="p-2 bg-gray-800 rounded-full">
           <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
@@ -174,9 +179,12 @@ export default function EntregadorPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-bold text-lg">#{pedido.numero} - {pedido.cliente.nome}</h3>
+                      
+                      {/* Endereço Visual Limpo */}
                       <p className="text-sm text-gray-600 font-medium">
                         {pedido.cliente.endereco.replace('CEP:', '').split('-')[0]}
                       </p>
+                      
                       <p className="text-xs text-gray-500">{pedido.cliente.bairro}</p>
                       <div className="mt-2 text-xs bg-gray-100 inline-block px-2 py-1 rounded">
                         Cobrar: <span className="font-bold text-red-600">R$ {pedido.total.toFixed(2)}</span> ({pedido.formaPagamento})

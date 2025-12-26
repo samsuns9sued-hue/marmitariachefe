@@ -296,20 +296,32 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
         </div>
       )}
 
-      {/* MODAL DE PRODUTO ATUALIZADO: Imagem dentro do scroll */}
+      {/* MODAL DE PRODUTO ATUALIZADO: HEADER FIXO */}
       {modalAberto && produtoSelecionado && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center">
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-lg max-h-[90vh] rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col animate-in slide-in-from-bottom">
              
-             {/* ÁREA ROLÁVEL (Imagem + Conteúdo) */}
+             {/* NOVO CABEÇALHO FIXO */}
+             <div className="flex justify-between items-center p-4 border-b bg-white z-10 sticky top-0">
+                <h3 className="font-bold text-lg text-gray-800 truncate pr-4">
+                  {produtoSelecionado.nome}
+                </h3>
+                <button
+                  onClick={() => setModalAberto(false)}
+                  className="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+             </div>
+
+             {/* ÁREA ROLÁVEL */}
              <div className="flex-1 overflow-y-auto">
                 <div className="relative h-56 bg-gray-100">
                   {produtoSelecionado.imagem ? <img src={produtoSelecionado.imagem} alt={produtoSelecionado.nome} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon size={48} className="text-gray-300" /></div>}
-                  <button onClick={() => setModalAberto(false)} className="absolute top-4 right-4 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center shadow-lg"><X size={20} /></button>
                 </div>
 
                 <div className="p-5">
-                  <h2 className="text-2xl font-bold">{produtoSelecionado.nome}</h2>
+                  {/* Removi o título daqui pq já está no header fixo */}
                   <p className="text-gray-500 mt-2">{produtoSelecionado.descricao}</p>
                   
                   {produtoSelecionado.categoria === 'MISTURA' && (

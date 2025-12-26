@@ -5,9 +5,9 @@ import { getPedidosParaEntrega, iniciarRotaEntrega, finalizarEntrega } from '@/l
 import { MapPin, Navigation, CheckCircle, Package, RefreshCw, ChevronDown, ChevronUp, Map } from 'lucide-react'
 import { toast } from 'sonner'
 
-// --- ⚠️ EDITE AQUI: AJUDA O GOOGLE A ACHAR O ENDEREÇO ---
-const CIDADE_PADRAO = "Várzea Grande - MT" // Ex: "Belo Horizonte - MG"
-// ---------------------------------------------------------
+// --- ⚠️ IMPORTANTE: CONFIRA O NOME DA SUA CIDADE ---
+const CIDADE_PADRAO = "Várzea Grande - MT" 
+// ---------------------------------------------------
 
 export default function EntregadorPage() {
   const [pedidos, setPedidos] = useState<any[]>([])
@@ -44,46 +44,42 @@ export default function EntregadorPage() {
     }
   }
 
-  // --- FUNÇÃO INTELIGENTE DE MAPAS ---
+  // --- FUNÇÃO DO MAPA CORRIGIDA ---
   const abrirGoogleMaps = (listaPedidos: any[]) => {
     if (listaPedidos.length === 0) return
 
-    // Monta os endereços de forma que o Google entenda
-    // Formato: Rua X, Numero - Bairro, Cidade - UF
     const destinos = listaPedidos.map(p => {
-      const endLimpo = `${p.cliente.endereco}, ${p.cliente.numero} - ${p.cliente.bairro}`
-      // Adiciona a cidade para evitar erros de rota
+      // CORREÇÃO: O 'endereco' no banco JÁ CONTÉM o número e o CEP concatenados.
+      // Não usamos mais p.cliente.numero aqui para evitar o "undefined".
+      const endLimpo = `${p.cliente.endereco} - ${p.cliente.bairro}`
+      
+      // Adiciona a cidade para o Google não se perder
       return encodeURIComponent(`${endLimpo}, ${CIDADE_PADRAO}`)
     }).join('/')
 
-    // Usa o formato /dir/ que força múltiplos destinos
-    // O "/" vazio no começo força a "Sua Localização" como origem
+    // Formato /dir/ força múltiplos destinos a partir da sua localização
     const urlMaps = `https://www.google.com/maps/dir//${destinos}`
     
     window.open(urlMaps, '_blank')
   }
 
-  // --- AÇÃO 1: INICIAR NOVA ROTA ---
   const handleGerarRota = async () => {
     if (selecionados.length === 0) return toast.error('Selecione pelo menos um pedido')
 
     const pedidosRota = pedidos.filter(p => selecionados.includes(p.id))
     
-    toast.loading('Atualizando status...')
+    toast.loading('Iniciando rota...')
     await iniciarRotaEntrega(selecionados)
     toast.dismiss()
     toast.success('Rota iniciada!')
 
-    // Abre o mapa
     abrirGoogleMaps(pedidosRota)
     
     setSelecionados([])
     carregar()
   }
 
-  // --- AÇÃO 2: REABRIR ROTA EXISTENTE ---
   const handleReabrirRota = () => {
-    // Pega todos que já estão na rua
     const emRota = pedidos.filter(p => p.status === 'SAIU_ENTREGA')
     abrirGoogleMaps(emRota)
   }
@@ -99,7 +95,7 @@ export default function EntregadorPage() {
   const emRota = pedidos.filter(p => p.status === 'SAIU_ENTREGA')
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-32"> {/* Aumentei padding bottom */}
+    <div className="min-h-screen bg-gray-100 pb-32">
       <header className="bg-gray-900 text-white p-4 sticky top-0 z-10 shadow-md flex justify-between items-center">
         <div>
           <h1 className="font-bold text-xl flex items-center gap-2">
@@ -161,7 +157,8 @@ export default function EntregadorPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-bold text-lg">#{pedido.numero} - {pedido.cliente.nome}</h3>
-                      <p className="text-sm text-gray-600 font-medium">{pedido.cliente.endereco}, {pedido.cliente.numero}</p>
+                      {/* CORREÇÃO VISUAL: Removi o .numero aqui também */}
+                      <p className="text-sm text-gray-600 font-medium">{pedido.cliente.endereco}</p>
                       <p className="text-xs text-gray-500">{pedido.cliente.bairro}</p>
                       <div className="mt-2 text-xs bg-gray-100 inline-block px-2 py-1 rounded">
                         Cobrar: <span className="font-bold text-red-600">R$ {pedido.total.toFixed(2)}</span> ({pedido.formaPagamento})
@@ -196,15 +193,13 @@ export default function EntregadorPage() {
         {pedidos.length === 0 && !loading && (
           <div className="text-center py-20 text-gray-400">
             <Package size={64} className="mx-auto mb-4 opacity-20" />
-            <p>Tudo tranquilo por aqui.</p>
+            <p>Tudo entregue por enquanto!</p>
           </div>
         )}
       </div>
 
       {/* FOOTER FLUTUANTE DE AÇÕES */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 flex flex-col gap-2">
-        
-        {/* BOTÃO 1: INICIAR ROTA (Só aparece se selecionar pendentes) */}
         {selecionados.length > 0 && (
           <button 
             onClick={handleGerarRota}
@@ -214,13 +209,12 @@ export default function EntregadorPage() {
           </button>
         )}
 
-        {/* BOTÃO 2: REABRIR MAPA (Só aparece se tiver gente na rua) */}
         {emRota.length > 0 && selecionados.length === 0 && (
           <button 
             onClick={handleReabrirRota}
             className="w-full bg-green-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg"
           >
-            <Map /> MAPA DA ROTA ATUAL
+            <Map /> REABRIR MAPA DA ROTA
           </button>
         )}
       </div>

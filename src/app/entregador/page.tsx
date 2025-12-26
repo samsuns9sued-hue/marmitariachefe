@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { getPedidosParaEntrega, iniciarRotaEntrega, finalizarEntrega } from '@/lib/actions'
-import { MapPin, Navigation, CheckCircle, Package, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
+import { MapPin, Navigation, CheckCircle, Package, RefreshCw, ChevronDown, ChevronUp, Map } from 'lucide-react'
 import { toast } from 'sonner'
+
+// --- ⚠️ EDITE AQUI: AJUDA O GOOGLE A ACHAR O ENDEREÇO ---
+const CIDADE_PADRAO = "Várzea Grande - MT" // Ex: "Belo Horizonte - MG"
+// ---------------------------------------------------------
 
 export default function EntregadorPage() {
   const [pedidos, setPedidos] = useState<any[]>([])
@@ -11,7 +15,6 @@ export default function EntregadorPage() {
   const [loading, setLoading] = useState(false)
   const [expandidos, setExpandidos] = useState<string[]>([])
 
-  // Carrega pedidos
   const carregar = async () => {
     setLoading(true)
     const dados = await getPedidosParaEntrega()
@@ -19,14 +22,12 @@ export default function EntregadorPage() {
     setLoading(false)
   }
 
-  // Atualiza a cada 30s
   useEffect(() => {
     carregar()
     const intervalo = setInterval(carregar, 30000)
     return () => clearInterval(intervalo)
   }, [])
 
-  // Selecionar pedido para rota
   const toggleSelecao = (id: string) => {
     if (selecionados.includes(id)) {
       setSelecionados(prev => prev.filter(item => item !== id))
@@ -35,7 +36,6 @@ export default function EntregadorPage() {
     }
   }
 
-  // Expandir detalhes
   const toggleDetalhes = (id: string) => {
     if (expandidos.includes(id)) {
       setExpandidos(prev => prev.filter(item => item !== id))
@@ -44,58 +44,68 @@ export default function EntregadorPage() {
     }
   }
 
-  // --- AÇÃO PRINCIPAL: GERAR ROTA E SAIR ---
+  // --- FUNÇÃO INTELIGENTE DE MAPAS ---
+  const abrirGoogleMaps = (listaPedidos: any[]) => {
+    if (listaPedidos.length === 0) return
+
+    // Monta os endereços de forma que o Google entenda
+    // Formato: Rua X, Numero - Bairro, Cidade - UF
+    const destinos = listaPedidos.map(p => {
+      const endLimpo = `${p.cliente.endereco}, ${p.cliente.numero} - ${p.cliente.bairro}`
+      // Adiciona a cidade para evitar erros de rota
+      return encodeURIComponent(`${endLimpo}, ${CIDADE_PADRAO}`)
+    }).join('/')
+
+    // Usa o formato /dir/ que força múltiplos destinos
+    // O "/" vazio no começo força a "Sua Localização" como origem
+    const urlMaps = `https://www.google.com/maps/dir//${destinos}`
+    
+    window.open(urlMaps, '_blank')
+  }
+
+  // --- AÇÃO 1: INICIAR NOVA ROTA ---
   const handleGerarRota = async () => {
     if (selecionados.length === 0) return toast.error('Selecione pelo menos um pedido')
 
-    // 1. Atualiza status no banco
-    toast.loading('Iniciando rota...')
-    await iniciarRotaEntrega(selecionados)
-    toast.dismiss()
-    toast.success('Status atualizado para Saiu para Entrega!')
-
-    // 2. Monta link do Google Maps
-    // Formato: https://www.google.com/maps/dir/Minha+Localizacao/End1/End2/End3
     const pedidosRota = pedidos.filter(p => selecionados.includes(p.id))
     
-    // Base do endereço para garantir que o Maps ache na cidade certa
-    // DICA: Adicione a cidade/estado fixo aqui se o Maps se perder
-    const enderecos = pedidosRota.map(p => 
-      encodeURIComponent(`${p.cliente.endereco}, ${p.cliente.numero} - ${p.cliente.bairro}`)
-    ).join('/')
+    toast.loading('Atualizando status...')
+    await iniciarRotaEntrega(selecionados)
+    toast.dismiss()
+    toast.success('Rota iniciada!')
 
-    const urlMaps = `https://www.google.com/maps/dir/?api=1&destination=${enderecos}&travelmode=motorcycle`
+    // Abre o mapa
+    abrirGoogleMaps(pedidosRota)
     
-    // Abre o App do Google Maps
-    window.open(urlMaps, '_blank')
-    
-    // Limpa seleção e recarrega
     setSelecionados([])
     carregar()
   }
 
-  // --- AÇÃO: ENTREGUE ---
+  // --- AÇÃO 2: REABRIR ROTA EXISTENTE ---
+  const handleReabrirRota = () => {
+    // Pega todos que já estão na rua
+    const emRota = pedidos.filter(p => p.status === 'SAIU_ENTREGA')
+    abrirGoogleMaps(emRota)
+  }
+
   const handleEntregue = async (id: string) => {
     if(!confirm('Confirmar entrega realizada?')) return
-    
     await finalizarEntrega(id)
     toast.success('Entrega baixada!')
     carregar()
   }
 
-  // Separa listas
   const pendentes = pedidos.filter(p => p.status === 'EM_PREPARO')
   const emRota = pedidos.filter(p => p.status === 'SAIU_ENTREGA')
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-24">
-      {/* Header */}
+    <div className="min-h-screen bg-gray-100 pb-32"> {/* Aumentei padding bottom */}
       <header className="bg-gray-900 text-white p-4 sticky top-0 z-10 shadow-md flex justify-between items-center">
         <div>
           <h1 className="font-bold text-xl flex items-center gap-2">
-            <Navigation className="text-yellow-400" /> Área do Entregador
+            <Navigation className="text-yellow-400" /> Entregas
           </h1>
-          <p className="text-xs text-gray-400">Selecione para criar rota</p>
+          <p className="text-xs text-gray-400">{CIDADE_PADRAO}</p>
         </div>
         <button onClick={carregar} className="p-2 bg-gray-800 rounded-full">
           <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
@@ -104,7 +114,7 @@ export default function EntregadorPage() {
 
       <div className="p-4 space-y-6">
         
-        {/* LISTA 1: PEDIDOS PRONTOS (Para selecionar e sair) */}
+        {/* LISTA 1: PENDENTES */}
         {pendentes.length > 0 && (
           <div>
             <h2 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
@@ -120,13 +130,11 @@ export default function EntregadorPage() {
                   onClick={() => toggleSelecao(pedido.id)}
                 >
                   <div className="p-4 flex items-center gap-3">
-                    {/* Checkbox Visual */}
                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
                       selecionados.includes(pedido.id) ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
                     }`}>
                       {selecionados.includes(pedido.id) && <CheckCircle size={14} className="text-white" />}
                     </div>
-
                     <div className="flex-1">
                       <div className="flex justify-between">
                         <h3 className="font-bold text-gray-800">#{pedido.numero} - {pedido.cliente.nome.split(' ')[0]}</h3>
@@ -141,11 +149,11 @@ export default function EntregadorPage() {
           </div>
         )}
 
-        {/* LISTA 2: EM ROTA (Para dar baixa) */}
+        {/* LISTA 2: EM ROTA */}
         {emRota.length > 0 && (
           <div>
             <h2 className="font-bold text-gray-700 mb-2 flex items-center gap-2 mt-4">
-              <Navigation size={18} /> Em Rota de Entrega ({emRota.length})
+              <Navigation size={18} /> Em Rota ({emRota.length})
             </h2>
             <div className="space-y-3">
               {emRota.map(pedido => (
@@ -153,34 +161,25 @@ export default function EntregadorPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-bold text-lg">#{pedido.numero} - {pedido.cliente.nome}</h3>
-                      <p className="text-sm text-gray-600 font-medium">{pedido.cliente.endereco}</p>
+                      <p className="text-sm text-gray-600 font-medium">{pedido.cliente.endereco}, {pedido.cliente.numero}</p>
                       <p className="text-xs text-gray-500">{pedido.cliente.bairro}</p>
-                      
-                      {/* Pagamento Info */}
                       <div className="mt-2 text-xs bg-gray-100 inline-block px-2 py-1 rounded">
                         Cobrar: <span className="font-bold text-red-600">R$ {pedido.total.toFixed(2)}</span> ({pedido.formaPagamento})
-                        {pedido.trocoPara && <span> | Troco p/ {pedido.trocoPara}</span>}
+                        {pedido.trocoPara && <span> | Troco: {pedido.trocoPara}</span>}
                       </div>
                     </div>
-                    
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleEntregue(pedido.id); }}
                       className="bg-green-600 text-white p-3 rounded-xl flex flex-col items-center gap-1 shadow-lg active:scale-95"
                     >
                       <CheckCircle size={24} />
-                      <span className="text-[10px] font-bold">ENTREGUE</span>
+                      <span className="text-[10px] font-bold">BAIXAR</span>
                     </button>
                   </div>
-
-                  {/* Botão Ver Detalhes */}
-                  <button 
-                    onClick={() => toggleDetalhes(pedido.id)}
-                    className="w-full mt-3 pt-2 border-t flex items-center justify-center gap-1 text-xs text-gray-400"
-                  >
+                  <button onClick={() => toggleDetalhes(pedido.id)} className="w-full mt-3 pt-2 border-t flex items-center justify-center gap-1 text-xs text-gray-400">
                     {expandidos.includes(pedido.id) ? 'Ocultar itens' : 'Ver itens'} 
                     {expandidos.includes(pedido.id) ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
                   </button>
-
                   {expandidos.includes(pedido.id) && (
                     <div className="mt-2 bg-gray-50 p-2 rounded text-sm space-y-1">
                       {pedido.itens.map((item: any) => (
@@ -197,26 +196,34 @@ export default function EntregadorPage() {
         {pedidos.length === 0 && !loading && (
           <div className="text-center py-20 text-gray-400">
             <Package size={64} className="mx-auto mb-4 opacity-20" />
-            <p>Tudo entregue! Sem pedidos pendentes.</p>
+            <p>Tudo tranquilo por aqui.</p>
           </div>
         )}
       </div>
 
-      {/* FOOTER FLUTUANTE (Só aparece se tiver selecionado) */}
-      {selecionados.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-lg z-20 animate-in slide-in-from-bottom">
-          <div className="flex justify-between items-center mb-3 text-sm font-medium text-gray-600">
-            <span>{selecionados.length} pedido(s) selecionado(s)</span>
-            <button onClick={() => setSelecionados([])} className="text-red-500">Cancelar</button>
-          </div>
+      {/* FOOTER FLUTUANTE DE AÇÕES */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 flex flex-col gap-2">
+        
+        {/* BOTÃO 1: INICIAR ROTA (Só aparece se selecionar pendentes) */}
+        {selecionados.length > 0 && (
           <button 
             onClick={handleGerarRota}
-            className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-blue-200 shadow-xl"
+            className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg animate-in slide-in-from-bottom"
           >
-            <Navigation /> GERAR ROTA E SAIR
+            <Navigation /> INICIAR {selecionados.length} ENTREGAS
           </button>
-        </div>
-      )}
+        )}
+
+        {/* BOTÃO 2: REABRIR MAPA (Só aparece se tiver gente na rua) */}
+        {emRota.length > 0 && selecionados.length === 0 && (
+          <button 
+            onClick={handleReabrirRota}
+            className="w-full bg-green-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg"
+          >
+            <Map /> MAPA DA ROTA ATUAL
+          </button>
+        )}
+      </div>
     </div>
   )
 }

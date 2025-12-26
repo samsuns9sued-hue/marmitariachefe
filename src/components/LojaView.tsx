@@ -1,6 +1,7 @@
+// src/components/LojaView.tsx
 'use client'
 
-import StatusPedidoBtn from './StatusPedidoBtn' // <--- Adicione isso
+import StatusPedidoBtn from './StatusPedidoBtn' // <--- Mantido
 import { useState } from 'react'
 import { useCarrinho } from '@/hooks/useCarrinho'
 import { criarPedido, buscarClientePorTelefone, calcularTaxaEntrega } from '@/lib/actions'
@@ -157,16 +158,44 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     })
   }
 
+  // --- CORREÇÃO APLICADA AQUI: PARSER DE ENDEREÇO ---
   const avancarIdentificacao = async () => {
     if (!cliente.nome.trim() || cliente.telefone.length < 8) {
       toast.error('Preencha Nome e WhatsApp')
       return
     }
     const res = await buscarClientePorTelefone(cliente.telefone)
+    
     if (res.success && res.cliente) {
+      // LÓGICA NOVA: SEPARAR A STRINGONA EM RUA E NÚMERO
+      let rua = res.cliente.endereco || ''
+      let numero = ''
+      let cep = ''
+
+      // Se o endereço salvo tem "Nº", vamos quebrar ele
+      if (rua.includes('Nº')) {
+        const partes = rua.split('Nº')
+        // Parte 0 é a Rua (tirando a vírgula final se tiver)
+        rua = partes[0].replace(/,\s*$/, '').trim() 
+        
+        const resto = partes[1] || ''
+        
+        // Pega o primeiro número que aparecer depois do "Nº"
+        const matchNumero = resto.match(/(\d+)/)
+        if (matchNumero) numero = matchNumero[0]
+
+        // Tenta achar o CEP
+        if (resto.includes('CEP:')) {
+           const matchCep = resto.match(/CEP:\s*([\d-]+)/)
+           if (matchCep) cep = matchCep[1].replace(/\D/g, '')
+        }
+      }
+
       setCliente(prev => ({
         ...prev,
-        endereco: res.cliente.endereco || '',
+        endereco: rua,
+        numero: numero, // Agora preenchemos o número!
+        cep: cep,
         bairro: res.cliente.bairro || '',
         referencia: res.cliente.referencia || ''
       }))
@@ -186,6 +215,8 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
     const taxaFinal = taxaEntregaCalculada !== null ? taxaEntregaCalculada : config.taxaEntrega
 
     setEnviando(true)
+    
+    // Salva no banco no formato "completo" para o histórico futuro
     const enderecoCompleto = `${cliente.endereco}, Nº ${cliente.numero}${cliente.cep ? ` - CEP: ${cliente.cep}` : ''}`
 
     const payload = {
@@ -202,7 +233,7 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
 
     if (res.success) {
       // SALVA O TELEFONE PARA O CLIENTE VER O PEDIDO DEPOIS
-      localStorage.setItem('marmitaria_telefone', cliente.telefone) // <--- LINHA NOVA
+      localStorage.setItem('marmitaria_telefone', cliente.telefone) 
 
       toast.success('Pedido Realizado com Sucesso!', { 
         description: 'Você receberá a confirmação no seu WhatsApp em instantes.',
@@ -237,7 +268,7 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
   return (
     <div className="pb-28 -mt-1">
       
-      <StatusPedidoBtn /> {/* <--- ADICIONE AQUI O BOTÃO FLUTUANTE */}
+      <StatusPedidoBtn /> {/* <--- Mantido o botão flutuante */}
 
       {/* Navegação Sticky */}
       <nav className="sticky top-0 bg-white z-20 shadow-sm">
@@ -329,7 +360,8 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
                   <div className="bg-gray-50 p-5 rounded-2xl text-left border">
                     <p className="font-bold text-lg">{cliente.nome}</p>
                     <p>{cliente.telefone}</p>
-                    <p className="mt-2 text-gray-600">{cliente.endereco} - {cliente.bairro}</p>
+                    <p className="mt-2 text-gray-600">{cliente.endereco} {cliente.numero ? `, Nº ${cliente.numero}` : ''}</p>
+                    <p className="text-sm text-gray-500">{cliente.bairro}</p>
                   </div>
                   <button onClick={() => setEtapa(4)} className="w-full bg-green-600 text-white font-bold py-4 rounded-xl">Sim, usar este endereço</button>
                   <button onClick={() => setEtapa(3)} className="w-full bg-white border-2 border-gray-200 text-gray-600 font-bold py-3 rounded-xl">Mudar endereço</button>
@@ -343,7 +375,6 @@ export default function LojaView({ produtos, tamanhos, config }: any) {
                   </button>
                   <div className="relative"><div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400"><Search size={18}/></div><input type="tel" maxLength={9} value={cliente.cep} onChange={e => buscarCep(e.target.value)} className="w-full pl-10 p-3 border-2 border-gray-200 rounded-xl outline-none" placeholder="Buscar por CEP" /></div>
                   
-                  {/* Resultado do Cálculo */}
                   {taxaEntregaCalculada !== null && (
                     <div className={`p-3 rounded-lg text-center font-bold text-sm ${taxaEntregaCalculada === 0 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-800'}`}>
                       {taxaEntregaCalculada === 0 ? 'Entrega Grátis!' : `Taxa de entrega: R$ ${taxaEntregaCalculada.toFixed(2)}`}

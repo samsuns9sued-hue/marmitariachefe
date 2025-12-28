@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react'
 import { getPedidosHoje, atualizarStatusPedido, logout } from '@/lib/actions'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-// Adicionei o ícone FileDown para indicar download
 import { Printer, RefreshCw, CheckCircle, Truck, Clock, LogOut, MapPin, Utensils, Ruler, MessageCircle, XCircle, FileDown } from 'lucide-react'
 import { toast } from 'sonner'
 import ImpressaoRecibo from '@/components/ImpressaoRecibo'
@@ -46,31 +45,27 @@ export default function AdminDashboard() {
     })
   }
 
-  // --- NOVA FUNÇÃO DE IMPRESSÃO (GERA PDF) ---
+  // --- NOVA FUNÇÃO DE IMPRESSÃO (CORRIGIDA O ERRO VERMELHO) ---
   const handleImprimir = async (pedido: any) => {
     setPedidoParaImprimir(pedido)
     
     toast.loading('Gerando Cupom...')
 
-    // Espera o React renderizar o componente escondido
     setTimeout(async () => {
       const elemento = document.getElementById('area-impressao')
       
       if (elemento) {
-        // Mostra temporariamente para o gerador de PDF conseguir ler
         elemento.classList.remove('hidden')
         
         try {
-          // Importa a biblioteca dinamicamente (só no cliente)
-          // @ts-ignore
-          const html2pdf = (await import('html2pdf.js')).default
+          // AQUI ESTA A CORREÇÃO: "as any" faz o erro vermelho sumir
+          const html2pdf = (await import('html2pdf.js')).default as any
 
           const opt = {
             margin:       0,
             filename:     `Pedido_${pedido.numero}.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 }, // Melhora a nitidez
-            // Configura tamanho do papel térmico (80mm largura x Altura dinâmica/longa)
+            html2canvas:  { scale: 2 }, 
             jsPDF:        { unit: 'mm', format: [80, 290], orientation: 'portrait' }
           }
 
@@ -81,13 +76,12 @@ export default function AdminDashboard() {
           console.error(error)
           toast.error('Erro ao gerar PDF')
         } finally {
-          // Esconde de volta
           elemento.classList.add('hidden')
         }
       }
     }, 500)
   }
-  // ------------------------------------------
+  // -----------------------------------------------------------
 
   const gerarLinkZapConfirmacao = (pedido: any) => {
     const telefone = pedido.cliente.telefone.replace(/\D/g, '')
@@ -247,14 +241,14 @@ ${itensMsg}
                 {pedido.status !== 'CANCELADO' && (
                   <button 
                     onClick={() => handleImprimir(pedido)}
-                    // Troquei o ícone para FileDown para indicar que baixa o arquivo
-                    title="Baixar Cupom PDF" 
+                    title="Baixar PDF / Imprimir" 
                     className="flex items-center justify-center p-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
                   >
                     <FileDown size={18} />
                   </button>
                 )}
                 
+                {/* ESTADOS DE AÇÃO */}
                 {pedido.status === 'PENDENTE' && (
                   <>
                     <button onClick={() => mudarStatus(pedido.id, 'EM_PREPARO')} className="col-span-2 bg-blue-600 text-white rounded py-2 font-medium">Aceitar</button>

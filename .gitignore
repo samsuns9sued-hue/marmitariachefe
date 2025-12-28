@@ -2,5 +2,6 @@
 node_modules
 .next
 android/
+android-cliente/
 capacitor.config.ts
 capacitor.config.json

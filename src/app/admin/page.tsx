@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react'
 import { getPedidosHoje, atualizarStatusPedido, logout } from '@/lib/actions'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Printer, RefreshCw, CheckCircle, Truck, Clock, LogOut, MapPin, Utensils, Ruler, MessageCircle, XCircle } from 'lucide-react'
+// Adicionei o ícone FileDown para indicar download
+import { Printer, RefreshCw, CheckCircle, Truck, Clock, LogOut, MapPin, Utensils, Ruler, MessageCircle, XCircle, FileDown } from 'lucide-react'
 import { toast } from 'sonner'
 import ImpressaoRecibo from '@/components/ImpressaoRecibo'
 
@@ -33,7 +34,6 @@ export default function AdminDashboard() {
   }, [])
 
   const mudarStatus = async (id: string, status: string) => {
-    // --- LÓGICA DE CANCELAMENTO ---
     if (status === 'CANCELADO') {
       if(!confirm('Tem certeza que deseja CANCELAR este pedido?')) return
     }
@@ -46,14 +46,49 @@ export default function AdminDashboard() {
     })
   }
 
-  const handleImprimir = (pedido: any) => {
+  // --- NOVA FUNÇÃO DE IMPRESSÃO (GERA PDF) ---
+  const handleImprimir = async (pedido: any) => {
     setPedidoParaImprimir(pedido)
-    setTimeout(() => {
-      window.print()
-    }, 100)
-  }
+    
+    toast.loading('Gerando Cupom...')
 
-  // --- MENSAGEM LIMPA DO WHATSAPP ---
+    // Espera o React renderizar o componente escondido
+    setTimeout(async () => {
+      const elemento = document.getElementById('area-impressao')
+      
+      if (elemento) {
+        // Mostra temporariamente para o gerador de PDF conseguir ler
+        elemento.classList.remove('hidden')
+        
+        try {
+          // Importa a biblioteca dinamicamente (só no cliente)
+          // @ts-ignore
+          const html2pdf = (await import('html2pdf.js')).default
+
+          const opt = {
+            margin:       0,
+            filename:     `Pedido_${pedido.numero}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 }, // Melhora a nitidez
+            // Configura tamanho do papel térmico (80mm largura x Altura dinâmica/longa)
+            jsPDF:        { unit: 'mm', format: [80, 290], orientation: 'portrait' }
+          }
+
+          await html2pdf().set(opt).from(elemento).save()
+          toast.dismiss()
+          toast.success('Cupom PDF baixado!')
+        } catch (error) {
+          console.error(error)
+          toast.error('Erro ao gerar PDF')
+        } finally {
+          // Esconde de volta
+          elemento.classList.add('hidden')
+        }
+      }
+    }, 500)
+  }
+  // ------------------------------------------
+
   const gerarLinkZapConfirmacao = (pedido: any) => {
     const telefone = pedido.cliente.telefone.replace(/\D/g, '')
     const primeiroNome = pedido.cliente.nome.split(' ')[0]
@@ -103,13 +138,22 @@ ${itensMsg}
       </div>
 
       <div className="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide print:hidden">
-        <Link href="/admin" className="px-4 py-3 bg-gray-800 text-white rounded-xl shadow-md font-bold flex items-center gap-2 whitespace-nowrap">
+        <Link 
+          href="/admin" 
+          className="px-4 py-3 bg-gray-800 text-white rounded-xl shadow-md font-bold flex items-center gap-2 whitespace-nowrap"
+        >
           📋 Pedidos
         </Link>
-        <Link href="/admin/produtos" className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl shadow-sm font-bold flex items-center gap-2 hover:bg-gray-50 whitespace-nowrap">
+        <Link 
+          href="/admin/produtos" 
+          className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl shadow-sm font-bold flex items-center gap-2 hover:bg-gray-50 whitespace-nowrap"
+        >
           <Utensils size={18} className="text-orange-500" /> Cardápio
         </Link>
-        <Link href="/admin/tamanhos" className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl shadow-sm font-bold flex items-center gap-2 hover:bg-gray-50 whitespace-nowrap">
+        <Link 
+          href="/admin/tamanhos" 
+          className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl shadow-sm font-bold flex items-center gap-2 hover:bg-gray-50 whitespace-nowrap"
+        >
           <Ruler size={18} className="text-blue-500" /> Tamanhos
         </Link>
       </div>
@@ -203,14 +247,14 @@ ${itensMsg}
                 {pedido.status !== 'CANCELADO' && (
                   <button 
                     onClick={() => handleImprimir(pedido)}
-                    title="Imprimir" 
+                    // Troquei o ícone para FileDown para indicar que baixa o arquivo
+                    title="Baixar Cupom PDF" 
                     className="flex items-center justify-center p-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
                   >
-                    <Printer size={18} />
+                    <FileDown size={18} />
                   </button>
                 )}
                 
-                {/* ESTADOS DE AÇÃO */}
                 {pedido.status === 'PENDENTE' && (
                   <>
                     <button onClick={() => mudarStatus(pedido.id, 'EM_PREPARO')} className="col-span-2 bg-blue-600 text-white rounded py-2 font-medium">Aceitar</button>

@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { getPedidosHoje, atualizarStatusPedido, logout } from '@/lib/actions'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Printer, RefreshCw, CheckCircle, Truck, Clock, LogOut, MapPin, Utensils, Ruler, MessageCircle, XCircle, FileDown } from 'lucide-react'
+import { Printer, RefreshCw, CheckCircle, Truck, Clock, LogOut, MapPin, Utensils, Ruler, MessageCircle, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import ImpressaoRecibo from '@/components/ImpressaoRecibo'
 
@@ -45,43 +45,28 @@ export default function AdminDashboard() {
     })
   }
 
-  // --- NOVA FUNÇÃO DE IMPRESSÃO (CORRIGIDA O ERRO VERMELHO) ---
-  const handleImprimir = async (pedido: any) => {
+  // --- FUNÇÃO DE IMPRESSÃO HÍBRIDA (PC E ANDROID) ---
+  const handleImprimir = (pedido: any) => {
     setPedidoParaImprimir(pedido)
     
-    toast.loading('Gerando Cupom...')
-
-    setTimeout(async () => {
-      const elemento = document.getElementById('area-impressao')
-      
-      if (elemento) {
-        elemento.classList.remove('hidden')
-        
-        try {
-          // AQUI ESTA A CORREÇÃO: "as any" faz o erro vermelho sumir
-          const html2pdf = (await import('html2pdf.js')).default as any
-
-          const opt = {
-            margin:       0,
-            filename:     `Pedido_${pedido.numero}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 }, 
-            jsPDF:        { unit: 'mm', format: [80, 290], orientation: 'portrait' }
-          }
-
-          await html2pdf().set(opt).from(elemento).save()
-          toast.dismiss()
-          toast.success('Cupom PDF baixado!')
-        } catch (error) {
-          console.error(error)
-          toast.error('Erro ao gerar PDF')
-        } finally {
-          elemento.classList.add('hidden')
-        }
+    // Pequeno delay para o React desenhar o cupom invisível
+    setTimeout(() => {
+      // Verifica se está rodando dentro do APP Android que vamos configurar
+      // @ts-ignore
+      if (window.Android) {
+         try {
+           // @ts-ignore
+           window.Android.print(); // Chama o Java do Android Studio
+         } catch (e) {
+           alert("Erro ao chamar impressora nativa");
+         }
+      } else {
+         // Se estiver no PC ou navegador normal
+         window.print(); 
       }
-    }, 500)
+    }, 100)
   }
-  // -----------------------------------------------------------
+  // --------------------------------------------------
 
   const gerarLinkZapConfirmacao = (pedido: any) => {
     const telefone = pedido.cliente.telefone.replace(/\D/g, '')
@@ -132,22 +117,13 @@ ${itensMsg}
       </div>
 
       <div className="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide print:hidden">
-        <Link 
-          href="/admin" 
-          className="px-4 py-3 bg-gray-800 text-white rounded-xl shadow-md font-bold flex items-center gap-2 whitespace-nowrap"
-        >
+        <Link href="/admin" className="px-4 py-3 bg-gray-800 text-white rounded-xl shadow-md font-bold flex items-center gap-2 whitespace-nowrap">
           📋 Pedidos
         </Link>
-        <Link 
-          href="/admin/produtos" 
-          className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl shadow-sm font-bold flex items-center gap-2 hover:bg-gray-50 whitespace-nowrap"
-        >
+        <Link href="/admin/produtos" className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl shadow-sm font-bold flex items-center gap-2 hover:bg-gray-50 whitespace-nowrap">
           <Utensils size={18} className="text-orange-500" /> Cardápio
         </Link>
-        <Link 
-          href="/admin/tamanhos" 
-          className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl shadow-sm font-bold flex items-center gap-2 hover:bg-gray-50 whitespace-nowrap"
-        >
+        <Link href="/admin/tamanhos" className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl shadow-sm font-bold flex items-center gap-2 hover:bg-gray-50 whitespace-nowrap">
           <Ruler size={18} className="text-blue-500" /> Tamanhos
         </Link>
       </div>
@@ -241,14 +217,14 @@ ${itensMsg}
                 {pedido.status !== 'CANCELADO' && (
                   <button 
                     onClick={() => handleImprimir(pedido)}
-                    title="Baixar PDF / Imprimir" 
+                    title="Imprimir" 
                     className="flex items-center justify-center p-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
                   >
-                    <FileDown size={18} />
+                    <Printer size={18} />
                   </button>
                 )}
                 
-                {/* ESTADOS DE AÇÃO */}
+                {/* BOTÕES DE AÇÃO (MANTIDOS) */}
                 {pedido.status === 'PENDENTE' && (
                   <>
                     <button onClick={() => mudarStatus(pedido.id, 'EM_PREPARO')} className="col-span-2 bg-blue-600 text-white rounded py-2 font-medium">Aceitar</button>

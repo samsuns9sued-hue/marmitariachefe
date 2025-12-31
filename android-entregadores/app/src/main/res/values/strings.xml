@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Entregas Marmitaria</string>
+    <string name="title_activity_main">Entregas Marmitaria</string>
+    <string name="package_name">com.seusite.app.entregadores</string>
+    <string name="custom_url_scheme">com.seusite.app.entregadores</string>
+</resources>
